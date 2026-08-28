@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Trophy, Sparkles, CheckCircle2, Award, Swords, ChevronRight } from 'lucide-react';
+import { X, Trophy, Sparkles, CheckCircle2, Award, Swords, ChevronRight, Wallet } from 'lucide-react';
 import { Match, MatchResult } from '../../../types';
 import { useApp } from '../../../context/AppContext';
 import { ReceiptModal } from './ReceiptModal';
@@ -14,6 +14,7 @@ export const MatchSubmissionModal: React.FC<MatchSubmissionModalProps> = ({ matc
   const { submitMatchResult, currentUser } = useApp();
   const [kills, setKills] = useState<number>(5);
   const [placement, setPlacement] = useState<number>(1);
+  const [playerUpi, setPlayerUpi] = useState<string>(() => localStorage.getItem('ff_player_upi') || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedResult, setSubmittedResult] = useState<MatchResult | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -26,6 +27,11 @@ export const MatchSubmissionModal: React.FC<MatchSubmissionModalProps> = ({ matc
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     tapFeedback();
+
+    if (playerUpi.trim()) {
+      localStorage.setItem('ff_player_upi', playerUpi.trim());
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -34,7 +40,7 @@ export const MatchSubmissionModal: React.FC<MatchSubmissionModalProps> = ({ matc
         tournamentId: match.tournamentId,
         kills: Number(kills),
         placement: Number(placement),
-        screenshotUrl: '',
+        screenshotUrl: playerUpi.trim() || '',
       });
 
       setSubmittedResult(res);
@@ -180,6 +186,30 @@ export const MatchSubmissionModal: React.FC<MatchSubmissionModalProps> = ({ matc
               </div>
             </div>
 
+            {/* Player's Receiving UPI ID */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-zinc-400 uppercase tracking-wider block">
+                YOUR RECEIVING UPI ID (FOR DIRECT MONEY TRANSFER)
+              </label>
+              <div className="flex items-center gap-2 bg-[#050507] border border-zinc-800 rounded-xl px-3 py-2.5 focus-within:border-[#FFE600] transition">
+                <Wallet className="w-4 h-4 text-[#FFE600] shrink-0" />
+                <input
+                  type="text"
+                  value={playerUpi}
+                  onChange={(e) => {
+                    setPlayerUpi(e.target.value);
+                    localStorage.setItem('ff_player_upi', e.target.value);
+                  }}
+                  placeholder="e.g. 9876543210@paytm or name@okaxis"
+                  className="w-full bg-transparent text-xs text-white font-mono font-bold focus:outline-none placeholder:text-zinc-600"
+                  required
+                />
+              </div>
+              <span className="text-[9px] text-zinc-500 block">
+                ⚡ Admin sends your ₹{totalWon} prize directly to this UPI ID.
+              </span>
+            </div>
+
             {/* Live Cash Reward Preview Card */}
             <div className="p-3.5 rounded-2xl bg-[#050507] border border-[#FFE600]/30 space-y-2 shadow-glow-yellow-sm">
               <span className="text-[9px] font-black uppercase text-[#FFE600] tracking-wider block">
@@ -206,10 +236,10 @@ export const MatchSubmissionModal: React.FC<MatchSubmissionModalProps> = ({ matc
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 rounded-2xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs tracking-wider uppercase shadow-glow-yellow transition active:scale-95 flex items-center justify-center gap-1.5"
+              disabled={isSubmitting || !playerUpi.trim()}
+              className="w-full py-3 rounded-2xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs tracking-wider uppercase shadow-glow-yellow transition active:scale-95 disabled:opacity-40 flex items-center justify-center gap-1.5"
             >
-              <span>{isSubmitting ? 'Crediting Wallet...' : `CLAIM ₹${totalWon} WINNINGS NOW`}</span>
+              <span>{isSubmitting ? 'Sending Request...' : `CLAIM ₹${totalWon} WINNINGS NOW`}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           </form>

@@ -127,24 +127,6 @@ export const HeaderSwitcher: React.FC<HeaderSwitcherProps> = ({ onOpenNotificati
             </button>
           )}
 
-          {/* Role selector dropdown */}
-          <div className="relative group">
-            <select
-              value={activeRole}
-              onChange={(e) => setActiveRole(e.target.value as UserRole)}
-              className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-orange-500 cursor-pointer appearance-none pr-7 font-medium"
-            >
-              {roles.map((r) => (
-                <option key={r.role} value={r.role} className="bg-slate-900 text-slate-200">
-                  {r.icon} Role: {r.label}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 text-[10px]">
-              ▼
-            </div>
-          </div>
-
           {/* Notifications Bell */}
           <button
             onClick={onOpenNotifications}

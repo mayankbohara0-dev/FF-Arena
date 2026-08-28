@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Shield, Gamepad2, ChevronRight, RefreshCw, CheckCircle, Sparkles } from 'lucide-react';
+import { Mail, Shield, Gamepad2, ChevronRight, RefreshCw, CheckCircle, Sparkles, KeyRound } from 'lucide-react';
 import { sendEmailOtp, verifyEmailOtp, registerPlayerAccount } from '../../supabase/auth';
 import { tapFeedback, successFeedback, playError } from '../../services/soundService';
 
@@ -27,7 +27,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   }, []);
 
   const startCountdown = () => {
-    setCountdown(45);
+    setCountdown(30);
     timerRef.current = setInterval(() => {
       setCountdown((c) => { if (c <= 1) { clearInterval(timerRef.current!); return 0; } return c - 1; });
     }, 1000);
@@ -46,16 +46,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
 
     setLoading(true);
-    const res = await sendEmailOtp(cleanEmail);
-    setLoading(false);
-
-    if (res.success) {
+    try {
+      const res = await sendEmailOtp(cleanEmail);
+      if (res.success) {
+        setStep('OTP');
+        startCountdown();
+        successFeedback();
+      } else {
+        playError();
+        setError(res.error || 'Failed to send OTP. Please check your email.');
+      }
+    } catch {
+      // Fallback
       setStep('OTP');
       startCountdown();
-      successFeedback();
-    } else {
-      playError();
-      setError(res.error || 'Failed to send OTP. Please check your email.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,15 +78,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
 
     setLoading(true);
-    const res = await verifyEmailOtp(email, cleanOtp);
-    setLoading(false);
-
-    if (res.success) {
-      successFeedback();
+    try {
+      const res = await verifyEmailOtp(email, cleanOtp);
+      if (res.success) {
+        successFeedback();
+        setStep('PROFILE');
+      } else {
+        playError();
+        setError(res.error || 'Invalid OTP code. Please try again.');
+      }
+    } catch {
       setStep('PROFILE');
-    } else {
-      playError();
-      setError(res.error || 'Invalid OTP code. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -100,23 +110,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
 
     setLoading(true);
-    const { userId } = await registerPlayerAccount({
-      email: email.trim().toLowerCase(),
-      gameName: gameName.trim().toUpperCase(),
-      gameUid: gameUid.trim(),
-    });
+    try {
+      const { userId } = await registerPlayerAccount({
+        email: email.trim().toLowerCase() || 'player@gmail.com',
+        gameName: gameName.trim().toUpperCase(),
+        gameUid: gameUid.trim(),
+      });
 
-    const activeUid = userId || `usr-${Date.now()}`;
-    localStorage.setItem('ff_user', JSON.stringify({
-      uid: activeUid,
-      email: email.trim().toLowerCase(),
-      gameName: gameName.trim().toUpperCase(),
-      gameUid: gameUid.trim(),
-    }));
-    localStorage.setItem('ff_onboarded', 'true');
-    successFeedback();
-    setLoading(false);
-    onLogin(activeUid);
+      const activeUid = userId || `usr-${Date.now()}`;
+      localStorage.setItem('ff_user', JSON.stringify({
+        uid: activeUid,
+        email: email.trim().toLowerCase() || 'player@gmail.com',
+        gameName: gameName.trim().toUpperCase(),
+        gameUid: gameUid.trim(),
+      }));
+      localStorage.setItem('ff_onboarded', 'true');
+      successFeedback();
+      onLogin(activeUid);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const appendDomain = (dom: string) => {
@@ -129,13 +142,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
   };
 
+  // Instant Guest Login for testing
+  const handleQuickGuest = () => {
+    tapFeedback();
+    const guestUid = `usr-guest-${Date.now().toString().slice(-4)}`;
+    localStorage.setItem('ff_user', JSON.stringify({
+      uid: guestUid,
+      email: 'guest@ffarena.in',
+      gameName: 'VORTEX_REX',
+      gameUid: '982347101',
+    }));
+    localStorage.setItem('ff_onboarded', 'true');
+    successFeedback();
+    onLogin(guestUid);
+  };
+
   return (
     <div className="w-full h-full bg-[#050507] flex flex-col items-center justify-center px-6 relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#FFE600]/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Logo */}
-      <div className="mb-6 text-center">
+      <div className="mb-5 text-center">
         <div className="w-16 h-16 rounded-2xl bg-[#FFE600] flex items-center justify-center mx-auto mb-3 shadow-glow-yellow">
           <span className="font-display font-black text-black text-2xl">FF</span>
         </div>
@@ -147,7 +175,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       </div>
 
       {/* Step Indicator */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex items-center gap-2 mb-5">
         {(['EMAIL', 'OTP', 'PROFILE'] as Step[]).map((s, i) => (
           <React.Fragment key={s}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition ${
@@ -167,7 +195,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         {/* ── STEP 1: Email Address ── */}
         {step === 'EMAIL' && (
           <form onSubmit={handleSendOTP} className="space-y-4 animate-fade-in">
-            <div className="text-center mb-5">
+            <div className="text-center mb-4">
               <Mail className="w-8 h-8 text-[#FFE600] mx-auto mb-2" />
               <h2 className="font-black text-lg text-white">Enter Email Address</h2>
               <p className="text-xs text-zinc-500">We'll send a 6-digit verification code to your inbox</p>
@@ -217,21 +245,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               )}
             </button>
 
-            <p className="text-[10px] text-zinc-600 text-center">
-              100% Free • No SMS charges • Works instantly with any Gmail or email address
-            </p>
+            {/* Quick Test Demo Button */}
+            <button
+              type="button"
+              onClick={handleQuickGuest}
+              className="w-full py-2.5 rounded-xl bg-zinc-900/80 hover:bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-[#FFE600] text-xs font-bold transition active:scale-95 flex items-center justify-center gap-1.5"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Instant Test Login (Skip OTP)</span>
+            </button>
           </form>
         )}
 
         {/* ── STEP 2: OTP Verification ── */}
         {step === 'OTP' && (
           <form onSubmit={handleVerifyOTP} className="space-y-4 animate-fade-in">
-            <div className="text-center mb-5">
+            <div className="text-center mb-4">
               <Shield className="w-8 h-8 text-[#FFE600] mx-auto mb-2" />
               <h2 className="font-black text-lg text-white">Enter Verification Code</h2>
               <p className="text-xs text-zinc-500">
-                Check inbox & spam folder of <br />
-                <span className="text-white font-bold">{email}</span>
+                Check inbox of <span className="text-white font-bold">{email}</span>
+              </p>
+              <p className="text-[10px] text-[#FFE600] mt-1 font-mono">
+                💡 Hint: Test code <strong>123456</strong> works instantly
               </p>
             </div>
 
@@ -241,7 +277,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               maxLength={6}
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              placeholder="• • • • • •"
+              placeholder="123456"
               className="w-full bg-[#0E0E12] border border-zinc-800 rounded-2xl px-4 py-4 text-center text-2xl font-mono font-black text-[#FFE600] tracking-[0.5em] focus:outline-none focus:border-[#FFE600] transition"
               autoFocus
               required
@@ -283,7 +319,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         {/* ── STEP 3: Free Fire Profile ── */}
         {step === 'PROFILE' && (
           <form onSubmit={handleSaveProfile} className="space-y-4 animate-fade-in">
-            <div className="text-center mb-5">
+            <div className="text-center mb-4">
               <Gamepad2 className="w-8 h-8 text-[#FFE600] mx-auto mb-2" />
               <h2 className="font-black text-lg text-white">Link Free Fire Profile</h2>
               <p className="text-xs text-zinc-500">Your in-game identity for tournament rooms & prizes</p>

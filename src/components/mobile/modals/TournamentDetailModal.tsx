@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { Tournament, Match } from '../../../types';
 import { useApp } from '../../../context/AppContext';
+import { TournamentInstructionsModal } from './TournamentInstructionsModal';
 
 interface TournamentDetailModalProps {
   tournament: Tournament;
@@ -34,6 +35,7 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'ROOM' | 'SCORING' | 'RULES' | 'PARTICIPANTS'>('OVERVIEW');
   const [isRegistering, setIsRegistering] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const tourneyMatches = matches.filter((m: any) => m.tournamentId === tournament.id);
@@ -50,10 +52,11 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleRegister = async () => {
+  const handleConfirmRegistration = async () => {
     setIsRegistering(true);
     const res = await payTournamentEntry(tournament.id);
     setIsRegistering(false);
+    setShowInstructions(false);
     if (!res.success) {
       alert(res.message);
     } else {
@@ -311,7 +314,7 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
 
           {!isRegistered ? (
             <button
-              onClick={handleRegister}
+              onClick={() => setShowInstructions(true)}
               disabled={isRegistering || tournament.currentParticipants >= maxSlots}
               className="px-5 py-2 rounded-xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs tracking-wider uppercase transition active:scale-95 shadow-glow-yellow-sm"
             >
@@ -327,6 +330,16 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* Instructions & Payout Explanation Modal */}
+      {showInstructions && (
+        <TournamentInstructionsModal
+          tournament={tournament}
+          isProcessing={isRegistering}
+          onConfirm={handleConfirmRegistration}
+          onClose={() => setShowInstructions(false)}
+        />
+      )}
     </div>
   );
 };

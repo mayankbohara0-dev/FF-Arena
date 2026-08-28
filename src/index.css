@@ -1,0 +1,134 @@
+@import "tailwindcss";
+
+@layer base {
+  /* ── Prevent any white flash / overflow ── */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    /* Lock to screen — no address bar shift */
+    overflow: hidden;
+    background-color: #050507;
+    color: #f4f4f5;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    /* Prevent pull-to-refresh & bounce scroll */
+    overscroll-behavior: none;
+    /* Prevent text size auto-adjust on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  #root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* No tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Accessible minimum touch targets */
+  button, a, [role="button"] {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* ── Tailwind xs: breakpoint variant (360px phones) ── */
+@layer utilities {
+  @media (min-width: 360px) {
+    .xs\:block   { display: block; }
+    .xs\:flex    { display: flex; }
+    .xs\:inline  { display: inline; }
+    .xs\:hidden  { display: none; }
+    .xs\:text-xs { font-size: 0.75rem; }
+    .xs\:text-sm { font-size: 0.875rem; }
+    .xs\:px-3    { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .xs\:gap-2   { gap: 0.5rem; }
+    .xs\:w-8     { width: 2rem; }
+    .xs\:h-8     { height: 2rem; }
+  }
+
+  /* Full-screen utility that accounts for dynamic browser chrome */
+  .h-screen-safe {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  /* Bottom safe-area padding for notched phones */
+  .pb-safe {
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  }
+  .pb-safe-lg {
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1c1c24; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #ffe600; }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Animations ── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255,230,0,0.25); }
+  50%       { box-shadow: 0 0 28px rgba(255,230,0,0.50); }
+}
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+.animate-fade-in      { animation: fadeIn 0.22s ease-out both; }
+.animate-scale-up     { animation: scaleUp 0.22s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-pulse-glow   { animation: pulseGlow 2s infinite ease-in-out; }
+.animate-slide-in-up  { animation: slideInUp 0.28s ease-out both; }
+.animate-slide-in-down{ animation: slideInDown 0.25s ease-out both; }
+
+/* ── Glow Shadows ── */
+.shadow-glow-yellow    { box-shadow: 0 0 20px -2px rgba(255,230,0,0.40); }
+.shadow-glow-yellow-sm { box-shadow: 0 0 10px -1px rgba(255,230,0,0.25); }
+.shadow-glow-yellow-lg { box-shadow: 0 0 35px -5px rgba(255,230,0,0.55); }
+.shadow-glow-emerald   { box-shadow: 0 0 20px -3px rgba(16,185,129,0.35); }
+.shadow-card-dark      { box-shadow: 0 8px 24px -8px rgba(0,0,0,0.80), 0 0 0 1px rgba(255,255,255,0.035); }
+
+/* ── Line clamp ── */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

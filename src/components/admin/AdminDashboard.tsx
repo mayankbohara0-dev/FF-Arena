@@ -6,94 +6,119 @@ import {
   AlertTriangle,
   Flame,
   Search,
-  Lock,
-  Unlock,
-  UserCheck,
-  Activity,
-  FileText,
-  Check,
-  X,
   PlusCircle,
-  Key,
   Trophy,
   Zap,
-  ArrowUpRight,
   ExternalLink,
-  DollarSign,
   Wallet,
   Send,
+  Copy,
+  Check,
+  Award,
+  DollarSign,
+  ChevronRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { UserRole } from '../../types';
 import { tapFeedback, booyahFeedback, successFeedback } from '../../services/soundService';
+
+interface WinnerPayout {
+  id: string;
+  tournamentName: string;
+  playerName: string;
+  gameName: string;
+  gameUid: string;
+  rank: number;
+  kills: number;
+  prizeAmount: number;
+  upiId: string;
+  status: 'PENDING' | 'PAID';
+  timestamp: string;
+}
 
 export const AdminDashboard: React.FC = () => {
   const {
-    currentUser,
     tournaments,
     createTournament,
     updateMatchRoom,
-    matches,
-    walletTransactions,
     addNotification,
     setViewMode,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'TOURNAMENTS' | 'PAYOUTS' | 'FRAUD'>('TOURNAMENTS');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'PAYOUTS' | 'TOURNAMENTS' | 'FRAUD'>('PAYOUTS');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Admin New Tournament State
   const [isCreatingTourney, setIsCreatingTourney] = useState(false);
   const [tourneyName, setTourneyName] = useState('Bermuda 48-Player Blitz #201');
   const [tourneyMap, setTourneyMap] = useState<'Bermuda' | 'Purgatory' | 'Kalahari'>('Bermuda');
-  const [roomIdInput, setRoomIdInput] = useState('9812401');
-  const [roomPassInput, setRoomPassInput] = useState('adminff88');
 
-  // Pending Player Payout Requests
-  const [payouts, setPayouts] = useState([
+  // Match Winners & Kill Bounty Payout Queue
+  const [winnerPayouts, setWinnerPayouts] = useState<WinnerPayout[]>([
     {
-      id: 'po-1',
+      id: 'win-1',
+      tournamentName: 'Bermuda 48P Flash Blitz #101',
       playerName: 'Aman Sharma',
       gameName: 'VORTEX_REX',
       gameUid: '982347101',
-      amount: 85,
+      rank: 1, // Booyah
+      kills: 8,
+      prizeAmount: 100, // 8 kills * ₹10 + ₹20 Booyah = ₹100
       upiId: 'aman@okaxis',
       status: 'PENDING',
-      timestamp: '15m ago',
-      matchTitle: 'Bermuda 48P Flash Blitz',
+      timestamp: '10m ago',
     },
     {
-      id: 'po-2',
+      id: 'win-2',
+      tournamentName: 'Bermuda 48P Flash Blitz #101',
       playerName: 'Rohit Kumar',
       gameName: 'SHADOW_SNIPER',
       gameUid: '871920391',
-      amount: 45,
+      rank: 2, // 2nd Place
+      kills: 5,
+      prizeAmount: 65, // 5 kills * ₹10 + ₹15 podium = ₹65
       upiId: 'rohit@ybl',
       status: 'PENDING',
-      timestamp: '42m ago',
-      matchTitle: 'Purgatory Duo Warfare',
+      timestamp: '12m ago',
+    },
+    {
+      id: 'win-3',
+      tournamentName: 'Bermuda 48P Flash Blitz #101',
+      playerName: 'Sahil Verma',
+      gameName: 'DEADLY_VIPER',
+      gameUid: '992018471',
+      rank: 3, // 3rd Place
+      kills: 3,
+      prizeAmount: 45, // 3 kills * ₹10 + ₹15 podium = ₹45
+      upiId: 'sahil@paytm',
+      status: 'PENDING',
+      timestamp: '15m ago',
+    },
+    {
+      id: 'win-4',
+      tournamentName: 'Purgatory Duo Warfare #88',
+      playerName: 'Vikram Singh',
+      gameName: 'PRO_FRAGGER_99',
+      gameUid: '918273645',
+      rank: 4, // Kill bounty only
+      kills: 7,
+      prizeAmount: 70, // 7 kills * ₹10 = ₹70
+      upiId: 'vikram@oksbi',
+      status: 'PENDING',
+      timestamp: '25m ago',
     },
   ]);
 
-  // Sample Fraud Detection Alerts
+  // Anti-cheat reports
   const [fraudAlerts, setFraudAlerts] = useState([
     {
       id: 'fa-1',
       type: 'DUPLICATE_UID',
       severity: 'HIGH',
       title: 'Duplicate Free Fire UID Detected',
-      details: 'Player "Speedy_FF" registered with UID 982347101, which is already bound to "Aman Sharma (VORTEX_REX)".',
+      details: 'Player "Speedy_FF" registered with UID 982347101, already bound to "Aman Sharma".',
       status: 'PENDING',
       timestamp: '10m ago',
-    },
-    {
-      id: 'fa-2',
-      type: 'ABNORMAL_KILLS',
-      severity: 'MEDIUM',
-      title: 'Abnormal Frag Spike (> 25 Kills)',
-      details: 'Account "ProSniper99" submitted 28 kills in Bermuda Solo match. Flagged for emulator / config file check.',
-      status: 'INVESTIGATING',
-      timestamp: '35m ago',
     },
   ]);
 
@@ -112,42 +137,54 @@ export const AdminDashboard: React.FC = () => {
     successFeedback();
   };
 
-  // 1-Tap Pay Player via UPI (Opens Admin's GPay/PhonePe)
-  const handlePayViaUpi = (payout: typeof payouts[0]) => {
+  // 1-Tap Pay Winner on GPay / PhonePe / Paytm
+  const handlePayViaUpi = (winner: WinnerPayout) => {
     tapFeedback();
-    const upiUri = `upi://pay?pa=${payout.upiId}&pn=${encodeURIComponent(payout.playerName)}&am=${payout.amount}&cu=INR&tn=${encodeURIComponent('FF Arena Winnings Payout')}`;
+    const upiUri = `upi://pay?pa=${winner.upiId}&pn=${encodeURIComponent(winner.playerName)}&am=${winner.prizeAmount}&cu=INR&tn=${encodeURIComponent(`FF Arena Prize: ${winner.tournamentName}`)}`;
     window.location.href = upiUri;
   };
 
-  const handleMarkPaid = (payoutId: string, payout: typeof payouts[0]) => {
+  const handleCopyUpi = (id: string, upiId: string) => {
     tapFeedback();
-    setPayouts((prev) =>
-      prev.map((p) => (p.id === payoutId ? { ...p, status: 'PAID' } : p))
+    navigator.clipboard.writeText(upiId);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleMarkPaid = (id: string, winner: WinnerPayout) => {
+    tapFeedback();
+    setWinnerPayouts((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, status: 'PAID' } : w))
     );
     successFeedback();
     addNotification(
-      'Withdrawal Approved! 💸',
-      `Admin approved and paid ₹${payout.amount} to your UPI ID ${payout.upiId}.`,
+      '🏆 Prize Money Sent via UPI!',
+      `Admin sent ₹${winner.prizeAmount} directly to your UPI ID ${winner.upiId} for ${winner.tournamentName}.`,
       'WALLET_CREDIT'
     );
   };
 
+  const pendingCount = winnerPayouts.filter((w) => w.status === 'PENDING').length;
+  const totalPendingAmount = winnerPayouts
+    .filter((w) => w.status === 'PENDING')
+    .reduce((sum, w) => sum + w.prizeAmount, 0);
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 animate-fade-in text-slate-200">
-      {/* Admin Header Banner */}
+      {/* Header Banner */}
       <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/50 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">
-              🛡️ OFFICIAL ADMIN GOVERNANCE
+              🛡️ ADMIN GOVERNANCE PORTAL
             </span>
-            <span className="text-slate-400 text-xs font-mono">Master Authority</span>
+            <span className="text-slate-400 text-xs font-mono">Whitelisted Admin Access</span>
           </div>
           <h2 className="font-display font-black text-2xl sm:text-3xl text-white tracking-wide">
-            Admin Management & Payout Portal
+            Match Control & Simple Winner Payouts
           </h2>
           <p className="text-xs text-slate-300 mt-0.5">
-            Create 48-player matches, broadcast room credentials, and process player winnings UPI payouts.
+            Transfer kill bounties and Booyah bonuses directly to players with 1-tap Google Pay / PhonePe.
           </p>
         </div>
 
@@ -160,16 +197,28 @@ export const AdminDashboard: React.FC = () => {
           </button>
           <button
             onClick={() => { tapFeedback(); setIsCreatingTourney(true); }}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs flex items-center gap-1.5 shadow-glow-purple transition active:scale-95"
+            className="px-4 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs flex items-center gap-1.5 shadow-glow-yellow-sm transition active:scale-95"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Create 48P Match</span>
+            <span>Publish 48P Match</span>
           </button>
         </div>
       </div>
 
       {/* Admin Tabs */}
       <div className="flex border-b border-slate-800 text-xs font-bold gap-4">
+        <button
+          onClick={() => { tapFeedback(); setActiveTab('PAYOUTS'); }}
+          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 ${
+            activeTab === 'PAYOUTS'
+              ? 'border-[#FFE600] text-[#FFE600]'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Wallet className="w-4 h-4" />
+          <span>⚡ Simple Winner Payouts ({pendingCount})</span>
+        </button>
+
         <button
           onClick={() => { tapFeedback(); setActiveTab('TOURNAMENTS'); }}
           className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 ${
@@ -180,18 +229,6 @@ export const AdminDashboard: React.FC = () => {
         >
           <Trophy className="w-4 h-4" />
           <span>48-Player Matches & Custom Rooms ({tournaments.length})</span>
-        </button>
-
-        <button
-          onClick={() => { tapFeedback(); setActiveTab('PAYOUTS'); }}
-          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 ${
-            activeTab === 'PAYOUTS'
-              ? 'border-purple-500 text-purple-400'
-              : 'border-transparent text-slate-400 hover:text-slate-200'
-          }`}
-        >
-          <Wallet className="w-4 h-4" />
-          <span>Player Winnings & UPI Payouts ({payouts.filter((p) => p.status === 'PENDING').length})</span>
         </button>
 
         <button
@@ -207,10 +244,121 @@ export const AdminDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* TAB 1: TOURNAMENT CREATOR & ROOM MANAGER */}
+      {/* ── TAB 1: SIMPLE WINNER PAYOUTS ── */}
+      {activeTab === 'PAYOUTS' && (
+        <div className="space-y-4 animate-fade-in">
+          {/* Summary Box */}
+          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <h4 className="font-bold text-sm text-white">INSTANT 1-TAP WINNER UPI PAYOUTS</h4>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Exact reward formula: <strong>Kills × ₹10</strong> + <strong>₹20 Booyah (#1)</strong> / <strong>₹15 Podium (#2, #3)</strong>.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <span className="text-[10px] text-slate-500 font-bold uppercase block">TOTAL TO PAY</span>
+                <span className="text-lg font-black text-[#FFE600] font-mono">₹{totalPendingAmount}.00</span>
+              </div>
+              <span className="px-3 py-1.5 rounded-xl bg-purple-500/20 text-purple-300 font-black text-xs border border-purple-500/30">
+                {pendingCount} Pending
+              </span>
+            </div>
+          </div>
+
+          {/* Winner Payout Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {winnerPayouts.map((w) => (
+              <div
+                key={w.id}
+                className={`p-4 rounded-2xl border space-y-3 shadow-md transition ${
+                  w.status === 'PAID'
+                    ? 'bg-slate-950 border-slate-800 opacity-60'
+                    : 'bg-slate-900 border-zinc-700 hover:border-[#FFE600]/40'
+                }`}
+              >
+                {/* Top Info */}
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase font-mono ${
+                        w.rank === 1
+                          ? 'bg-[#FFE600] text-black shadow-glow-yellow-sm'
+                          : w.rank === 2 || w.rank === 3
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                          : 'bg-zinc-800 text-zinc-300'
+                      }`}>
+                        {w.rank === 1 ? '🏆 1ST BOOYAH' : w.rank === 2 ? '🥈 2ND PLACE' : w.rank === 3 ? '🥉 3RD PLACE' : `#${w.rank} FRAGGER`}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">{w.timestamp}</span>
+                    </div>
+
+                    <h5 className="font-black text-base text-white">{w.playerName}</h5>
+                    <div className="text-xs font-mono text-[#FFE600] font-bold">
+                      IGN: {w.gameName} • UID: {w.gameUid}
+                    </div>
+                  </div>
+
+                  {/* Calculated Prize Pill */}
+                  <div className="text-right">
+                    <span className="text-xl font-black text-[#FFE600] font-mono block">₹{w.prizeAmount}.00</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">
+                      {w.kills} Kills (₹{w.kills * 10}) {w.rank === 1 ? '+ ₹20' : w.rank <= 3 ? '+ ₹15' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Player's UPI Details Box */}
+                <div className="p-3 rounded-xl bg-[#050507] border border-zinc-800 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="text-[8px] font-bold text-zinc-500 uppercase block">PLAYER'S RECEIVING UPI ID</span>
+                    <span className="font-mono text-xs font-bold text-white select-all block truncate">{w.upiId}</span>
+                  </div>
+                  <button
+                    onClick={() => handleCopyUpi(w.id, w.upiId)}
+                    className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-[10px] font-bold text-zinc-300 flex items-center gap-1 shrink-0"
+                  >
+                    {copiedId === w.id ? <Check className="w-3 h-3 text-[#FFE600]" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedId === w.id ? 'COPIED' : 'COPY'}</span>
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                {w.status === 'PENDING' ? (
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handlePayViaUpi(w)}
+                      className="flex-1 py-2.5 rounded-xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs flex items-center justify-center gap-1.5 shadow-glow-yellow-sm active:scale-95 transition"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>⚡ Pay ₹{w.prizeAmount} via GPay/PhonePe</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleMarkPaid(w.id, w)}
+                      className="px-3.5 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>Mark Paid</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-xl bg-green-950/40 border border-green-500/30 text-green-400 text-xs font-bold text-center flex items-center justify-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-green-400" />
+                    <span>✓ ₹{w.prizeAmount} Transferred via UPI & Player Notified</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 2: TOURNAMENT CREATOR & ROOM MANAGER ── */}
       {activeTab === 'TOURNAMENTS' && (
         <div className="space-y-6">
-          {/* Create Modal if Open */}
+          {/* Create Modal */}
           {isCreatingTourney && (
             <div className="p-5 rounded-2xl bg-slate-900 border border-purple-500/50 space-y-4 animate-fade-in shadow-xl">
               <div className="flex items-center justify-between">
@@ -218,12 +366,7 @@ export const AdminDashboard: React.FC = () => {
                   <PlusCircle className="w-4 h-4 text-purple-400" />
                   Publish Official 48-Player Tournament
                 </h4>
-                <button
-                  onClick={() => setIsCreatingTourney(false)}
-                  className="text-xs text-slate-400 hover:text-white"
-                >
-                  ✕
-                </button>
+                <button onClick={() => setIsCreatingTourney(false)} className="text-xs text-slate-400 hover:text-white">✕</button>
               </div>
 
               <form onSubmit={handleAdminCreate} className="space-y-3">
@@ -259,7 +402,7 @@ export const AdminDashboard: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold text-xs shadow-md transition active:scale-95"
+                  className="w-full py-2.5 rounded-xl bg-[#FFE600] text-black font-black text-xs shadow-glow-yellow-sm transition active:scale-95"
                 >
                   Publish 48-Player Tournament As Admin 🚀
                 </button>
@@ -276,7 +419,7 @@ export const AdminDashboard: React.FC = () => {
                 <div key={t.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-md">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[9px] font-black text-purple-400 uppercase tracking-wider">{t.map} • 48 SLOTS</span>
+                      <span className="text-[9px] font-black text-[#FFE600] uppercase tracking-wider">{t.map} • 48 SLOTS</span>
                       <h5 className="font-bold text-sm text-white">{t.name}</h5>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
@@ -324,90 +467,12 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: PLAYER WINNINGS & UPI PAYOUTS */}
-      {activeTab === 'PAYOUTS' && (
-        <div className="space-y-4 animate-fade-in">
-          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-            <div>
-              <h4 className="font-bold text-sm text-white">PLAYER WINNINGS WITHDRAWAL REQUESTS</h4>
-              <p className="text-xs text-slate-400">
-                Players earned prize money from kills (₹10/kill) and podium finishes. Transfer via UPI and mark paid.
-              </p>
-            </div>
-            <span className="px-3 py-1 rounded-xl bg-purple-500/20 text-purple-300 font-bold text-xs">
-              {payouts.filter((p) => p.status === 'PENDING').length} Pending Requests
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {payouts.map((po) => (
-              <div key={po.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-md">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h5 className="font-bold text-sm text-white">{po.playerName}</h5>
-                    <span className="text-[10px] font-mono text-purple-400">IGN: {po.gameName} (UID: {po.gameUid})</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-lg font-black text-[#FFE600] font-mono">₹{po.amount}.00</span>
-                    <span className={`text-[9px] font-bold block ${po.status === 'PAID' ? 'text-green-400' : 'text-amber-400'}`}>
-                      {po.status === 'PAID' ? '✓ TRANSFERRED' : '⏳ PENDING'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[9px] font-bold text-slate-500 uppercase block">PLAYER'S RECEIVING UPI ID</span>
-                    <span className="font-mono text-xs font-bold text-white select-all">{po.upiId}</span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(po.upiId);
-                      tapFeedback();
-                      alert(`Copied UPI ID: ${po.upiId}`);
-                    }}
-                    className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-bold text-slate-300"
-                  >
-                    Copy
-                  </button>
-                </div>
-
-                {po.status === 'PENDING' ? (
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handlePayViaUpi(po)}
-                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>1-Tap Pay via GPay / PhonePe</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMarkPaid(po.id, po)}
-                      className="px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-xs flex items-center justify-center gap-1 active:scale-95 transition"
-                    >
-                      <Check className="w-4 h-4" />
-                      <span>Mark Paid</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="p-2.5 rounded-xl bg-green-950/40 border border-green-500/30 text-green-400 text-xs font-bold text-center">
-                    ✓ Payout Completed & Player Notified
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: ANTI-CHEAT SENTINEL */}
+      {/* ── TAB 3: ANTI-CHEAT SENTINEL ── */}
       {activeTab === 'FRAUD' && (
         <div className="space-y-4 animate-fade-in">
           <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
             <h4 className="font-bold text-sm text-white">AUTOMATED FRAUD & SUSPICIOUS PLAYERS LIST</h4>
-            <p className="text-xs text-slate-400">Review suspicious accounts flagged by the platform anti-cheat engine.</p>
+            <p className="text-xs text-slate-400">Review accounts flagged by the platform anti-cheat engine.</p>
           </div>
 
           <div className="space-y-3">

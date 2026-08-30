@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { AppProvider } from './context/AppContext';
 import { MobileAppLayout } from './components/mobile/MobileAppLayout';
 import { NotificationDrawer } from './components/common/NotificationDrawer';
 import { OnboardingFlow } from './components/mobile/OnboardingFlow';
 import { LoginScreen } from './components/mobile/LoginScreen';
+import { LandingPage } from './components/landing/LandingPage';
 
-type AppState = 'LOADING' | 'ONBOARDING' | 'LOGIN' | 'APP';
+type AppState = 'LOADING' | 'LANDING' | 'ONBOARDING' | 'LOGIN' | 'APP';
 
 // Global error boundary to catch JS crashes on Android WebView
 class ErrorBoundary extends React.Component<
@@ -55,67 +57,36 @@ const MainAppContent: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [appState, setAppState] = useState<AppState>('LOADING');
 
+  const proceedToApp = () => {
+    const onboarded = localStorage.getItem('ff_onboarded');
+    const user = localStorage.getItem('ff_user');
+    if (!onboarded) {
+      setAppState('ONBOARDING');
+    } else if (!user) {
+      setAppState('LOGIN');
+    } else {
+      setAppState('APP');
+    }
+  };
+
   useEffect(() => {
-    // Small delay to let the WebView fully initialize on Android
+    // Check if inside native Android APK or on Web
     const timer = setTimeout(() => {
       try {
-        const onboarded = localStorage.getItem('ff_onboarded');
-        const user      = localStorage.getItem('ff_user');
+        const isNative = Capacitor.isNativePlatform();
+        const urlParams = new URLSearchParams(window.location.search);
+        const forcePlay = urlParams.get('play') === '1' || window.location.hash === '#play';
 
-        if (!onboarded) {
-          setAppState('ONBOARDING');
-        } else if (!user) {
-          setAppState('LOGIN');
+        if (isNative || forcePlay) {
+          proceedToApp();
         } else {
-          // Bridge: if ff_arena_user is missing but ff_user exists, seed it
-          // This handles users who logged in before the fix was deployed
-          const arenaUser = localStorage.getItem('ff_arena_user');
-          if (!arenaUser) {
-            try {
-              const parsed = JSON.parse(user);
-              const bridged = {
-                id: parsed.uid || `usr-${Date.now()}`,
-                email: parsed.email || '',
-                username: (parsed.gameName || 'PLAYER').toLowerCase().replace(/\s+/g, '_'),
-                displayName: parsed.gameName || 'PLAYER',
-                gamerProfile: {
-                  id: `gp-${parsed.uid}`,
-                  userId: parsed.uid || '',
-                  gameUid: parsed.gameUid || '',
-                  gameName: parsed.gameName || 'PLAYER',
-                  region: 'IND',
-                  rating: 1200,
-                  tier: 'Gold',
-                  rank: 0,
-                  totalMatches: 0,
-                  totalTournaments: 0,
-                  totalWins: 0,
-                  top3Finishes: 0,
-                  top10Finishes: 0,
-                  totalKills: 0,
-                  avgKills: 0,
-                  avgPlacement: 0,
-                  winRate: 0,
-                  headshotRate: 0,
-                  verified: false,
-                },
-                walletBalance: 0,
-                winningsBalance: 0,
-                role: 'PLAYER',
-                status: 'Active',
-                createdAt: new Date().toISOString(),
-              };
-              localStorage.setItem('ff_arena_user', JSON.stringify(bridged));
-            } catch {
-              // ignore, AppContext falls back to mock data
-            }
-          }
-          setAppState('APP');
+          // On Web browser, show the landing page with direct APK download & Web app launch
+          setAppState('LANDING');
         }
       } catch {
-        setAppState('ONBOARDING');
+        setAppState('LANDING');
       }
-    }, 200);
+    }, 150);
     return () => clearTimeout(timer);
   }, []);
 
@@ -132,6 +103,10 @@ const MainAppContent: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  if (appState === 'LANDING') {
+    return <LandingPage />;
   }
 
   if (appState === 'ONBOARDING') {

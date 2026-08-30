@@ -9,6 +9,7 @@ import {
   Shield,
   ChevronRight,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { BadgePill } from '../common/BadgePill';
@@ -179,6 +180,22 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   <span>My Squad Roster ({currentTeam ? currentTeam.name : 'Create Squad'})</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+              </button>
+              <button
+                onClick={() => {
+                  tapFeedback();
+                  window.open('https://github.com/mayankbohara0-dev/FF-Arena/releases/download/v1.0.0/ff-arena-v1.0.apk', '_blank');
+                }}
+                className="w-full p-2.5 rounded-xl bg-[#FFE600]/10 hover:bg-[#FFE600]/20 border border-[#FFE600]/30 flex items-center justify-between transition cursor-pointer text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Download className="w-4 h-4 text-[#FFE600]" />
+                  <div>
+                    <span className="font-bold text-white text-xs block">Download Android APK</span>
+                    <span className="text-[9px] text-[#FFE600] font-mono">v1.0.0 • 100% Virus-Free (10 MB)</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-[#FFE600]" />
               </button>
 
               {currentCollege && (

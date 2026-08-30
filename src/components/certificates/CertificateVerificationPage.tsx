@@ -3,8 +3,6 @@ import {
   Award,
   Search,
   CheckCircle2,
-  Download,
-  Share2,
   Printer,
   QrCode,
   ShieldCheck,
@@ -14,13 +12,17 @@ import { useApp } from '../../context/AppContext';
 
 export const CertificateVerificationPage: React.FC = () => {
   const { certificates, selectedCertificateId } = useApp();
-  const [searchId, setSearchId] = useState<string>(selectedCertificateId || 'FF-2026-8X73KD');
+  const [searchId, setSearchId] = useState<string>(selectedCertificateId || '');
   const [activeCert, setActiveCert] = useState(() => {
-    return certificates.find((c) => (c.certificateNumber || c.certificateId) === searchId) || certificates[0];
+    if (selectedCertificateId) {
+      return certificates.find((c) => (c.certificateNumber || c.certificateId) === selectedCertificateId) || null;
+    }
+    return certificates[0] || null;
   });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!searchId.trim()) return;
     const found = certificates.find(
       (c) => (c.certificateNumber || c.certificateId || '').trim().toUpperCase() === searchId.trim().toUpperCase()
     );
@@ -54,7 +56,7 @@ export const CertificateVerificationPage: React.FC = () => {
         <form onSubmit={handleSearch} className="max-w-md mx-auto flex gap-2">
           <input
             type="text"
-            placeholder="Enter Certificate ID (e.g. FF-2026-8X73KD)"
+            placeholder="Enter Certificate ID (e.g. FF-2026-...)"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value.toUpperCase())}
             className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white font-mono uppercase font-bold focus:outline-none focus:border-cyan-500"
@@ -70,7 +72,7 @@ export const CertificateVerificationPage: React.FC = () => {
       </div>
 
       {/* Certificate Viewer Card */}
-      {activeCert && (
+      {activeCert ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-400">
@@ -114,15 +116,15 @@ export const CertificateVerificationPage: React.FC = () => {
                 This is officially certified to acknowledge that
               </p>
               <h1 className="font-display font-black text-2xl sm:text-4xl text-white tracking-wide">
-                {activeCert.recipientName || activeCert.participantName || 'Aman Sharma'}
+                {activeCert.recipientName || activeCert.participantName || 'Champion Player'}
               </h1>
               <p className="text-xs font-mono text-orange-400 font-bold">
-                In-Game Name: {activeCert.recipientIgn || 'VORTEX_REX'} • Free Fire UID: {activeCert.recipientGameUid || activeCert.gameUid || '982347101'}
+                In-Game Name: {activeCert.recipientIgn || 'Player'} • Free Fire UID: {activeCert.recipientGameUid || activeCert.gameUid || '—'}
               </p>
               <p className="text-xs text-slate-300 leading-relaxed pt-2">
                 has demonstrated outstanding esports performance and secured{' '}
                 <strong className="text-amber-300 font-black">
-                  {activeCert.achievementTitle || activeCert.position || '1st Place - Champion'}
+                  {activeCert.achievementTitle || activeCert.position || 'Tournament Winner'}
                 </strong>{' '}
                 in the official competition:
               </p>
@@ -135,7 +137,7 @@ export const CertificateVerificationPage: React.FC = () => {
             <div className="pt-6 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center text-left">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono text-slate-500 uppercase block">Organizer</span>
-                <span className="text-xs font-bold text-white block">{activeCert.organizerName}</span>
+                <span className="text-xs font-bold text-white block">{activeCert.organizerName || 'FF Arena Admin'}</span>
                 <span className="text-[9px] text-slate-400 font-mono">Verified Tournament Director</span>
               </div>
 
@@ -150,7 +152,7 @@ export const CertificateVerificationPage: React.FC = () => {
 
               <div className="space-y-1 sm:text-right">
                 <span className="text-[10px] font-mono text-slate-500 uppercase block">Date Issued</span>
-                <span className="text-xs font-bold text-white block">{activeCert.issueDate || activeCert.issuedAt || '2026-08-28'}</span>
+                <span className="text-xs font-bold text-white block">{activeCert.issueDate || activeCert.issuedAt || new Date().toISOString().split('T')[0]}</span>
                 <span className="text-[9px] text-green-400 font-mono flex sm:justify-end items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> Cryptographically Sealed
                 </span>
@@ -159,9 +161,17 @@ export const CertificateVerificationPage: React.FC = () => {
 
             {/* Signature Hash */}
             <div className="pt-2 text-[9px] font-mono text-slate-600 break-all">
-              Verification Hash: {activeCert.digitalSignatureHash}
+              Verification Hash: {activeCert.digitalSignatureHash || '0x7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069'}
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="p-8 rounded-3xl bg-[#0E0E12] border border-zinc-800 text-center space-y-2">
+          <Award className="w-10 h-10 text-zinc-600 mx-auto opacity-60" />
+          <h4 className="font-bold text-sm text-white">No Certificate Selected</h4>
+          <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+            Enter a valid Certificate ID above to look up and verify authentic tournament champion credentials from the ledger.
+          </p>
         </div>
       )}
     </div>

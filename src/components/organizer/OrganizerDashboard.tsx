@@ -684,11 +684,11 @@ export const OrganizerDashboard: React.FC = () => {
                 const cert = issueCertificate({
                   userId: currentUser.id,
                   participantName: nameEl?.value || currentUser.displayName,
-                  gameUid: currentUser.gamerProfile?.gameUid || '982347101',
-                  tournamentId: tournaments[0].id,
-                  tournamentName: tournaments[0].name,
+                  gameUid: currentUser.gamerProfile?.gameUid || currentUser.username || 'PLAYER',
+                  tournamentId: tournaments[0]?.id || 'tour-001',
+                  tournamentName: tournaments[0]?.name || 'Official Match',
                   position: posEl?.value || '1st Place - Champion',
-                  organizerName: 'Esports India League',
+                  organizerName: 'Official FF Arena Admin',
                 });
                 alert(`Certificate Issued! ID: ${cert.certificateId}`);
               }}

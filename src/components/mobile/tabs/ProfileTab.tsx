@@ -49,9 +49,12 @@ export const ProfileTab: React.FC = () => {
 
   const handleCopyUid = () => {
     tapFeedback();
-    navigator.clipboard.writeText(currentUser.gamerProfile?.gameUid || '982347101');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const uid = currentUser.gamerProfile?.gameUid || '';
+    if (uid) {
+      navigator.clipboard.writeText(uid);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   // Kills history for completed matches

@@ -59,6 +59,26 @@ export async function fetchTournaments(): Promise<Tournament[] | null> {
   }
 }
 
+export async function fetchLeaderboard(): Promise<any[] | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const { data, error } = await supabase
+      .from('gamer_profiles')
+      .select('id, user_id, game_name, game_uid, rating, tier, total_kills, total_wins, total_matches')
+      .order('rating', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.warn('[Supabase] fetchLeaderboard notice:', error.message);
+      return null;
+    }
+    return data || [];
+  } catch (err) {
+    console.error('[Supabase] fetchLeaderboard exception:', err);
+    return null;
+  }
+}
+
 export function subscribeTournaments(onUpdate: (tournaments: Tournament[]) => void) {
   if (!isSupabaseConfigured()) return () => {};
 
@@ -206,8 +226,8 @@ export function subscribeUserRegistrations(userId: string, onUpdate: (regs: Regi
               tournamentId: r.tournament_id,
               userId: r.user_id,
               teamId: r.team_id,
-              playerName: 'You',
-              gameUid: '982347101',
+              playerName: r.player_name || 'You',
+              gameUid: r.game_uid || 'Linked UID',
               status: r.status === 'CONFIRMED' ? 'Confirmed' : 'Pending',
               slotNumber: r.slot_number,
               registeredAt: r.registered_at,
@@ -267,6 +287,7 @@ export async function submitMatchResult(data: {
 
 export async function upsertUserProfile(user: {
   id?: string;
+  email?: string;
   phone?: string;
   displayName: string;
   gameName: string;
@@ -275,7 +296,7 @@ export async function upsertUserProfile(user: {
   if (!isSupabaseConfigured()) return null;
   try {
     // Upsert into users
-    const email = `${user.phone || Date.now()}@ffarena.in`;
+    const email = user.email || `${user.phone || Date.now()}@ffarena.in`;
     const username = (user.gameName || 'user').toLowerCase().replace(/\s+/g, '_') + '_' + Date.now().toString().slice(-4);
 
     const { data: userData, error: userError } = await supabase
@@ -302,26 +323,22 @@ export async function upsertUserProfile(user: {
 
     const userId = userData?.id;
     if (userId) {
-      // Upsert into gamer_profiles
+      // Upsert into gamer_profiles with real clean starting stats
       await supabase.from('gamer_profiles').upsert(
         {
           user_id: userId,
           game_uid: user.gameUid,
           game_name: user.gameName,
           region: 'IND',
-          rating: 1450,
-          tier: 'Platinum',
-        },
-        { onConflict: 'user_id' }
-      );
-
-      // Ensure wallet exists
-      await supabase.from('wallets').upsert(
-        {
-          user_id: userId,
-          balance: 125,
-          winnings: 85,
-          kyc_status: 'NONE',
+          rating: 1000,
+          tier: 'Bronze',
+          total_matches: 0,
+          total_tournaments: 0,
+          total_wins: 0,
+          total_kills: 0,
+          win_rate: 0.00,
+          avg_kills: 0.00,
+          verified: false,
         },
         { onConflict: 'user_id' }
       );

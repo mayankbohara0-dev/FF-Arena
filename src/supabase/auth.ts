@@ -117,6 +117,7 @@ export async function registerPlayerAccount(profile: {
 }): Promise<{ success: boolean; userId?: string }> {
   try {
     const userId = await upsertUserProfile({
+      email: profile.email,
       phone: profile.phone || profile.email.split('@')[0],
       displayName: profile.gameName,
       gameName: profile.gameName,

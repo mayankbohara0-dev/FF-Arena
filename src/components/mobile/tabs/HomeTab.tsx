@@ -28,8 +28,13 @@ export const HomeTab: React.FC<HomeTabProps> = ({
 
   const featuredTourney = tournaments[0];
   const activeMatch = matches.find((m: any) => m.isRoomReleased) || matches[0];
-  const safeWalletBalance = currentUser.walletBalance ?? 125;
-  const safeWinningsBalance = currentUser.winningsBalance ?? 85;
+  const safeWalletBalance = currentUser.walletBalance ?? 0;
+  const safeWinningsBalance = currentUser.winningsBalance ?? 0;
+  const gamerProfile = currentUser.gamerProfile;
+  const winRate = gamerProfile && gamerProfile.totalMatches > 0 ? `${gamerProfile.winRate.toFixed(1)}%` : '0%';
+  const combatXp = gamerProfile ? (gamerProfile.totalMatches * 100 + gamerProfile.totalKills * 50) : 0;
+  const formattedXp = combatXp >= 1000 ? `${(combatXp / 1000).toFixed(1)}K` : `${combatXp}`;
+  const rankLabel = gamerProfile?.rank && gamerProfile.rank > 0 ? `Rank #${gamerProfile.rank} Global` : (gamerProfile?.tier ? `${gamerProfile.tier} Tier` : 'Unranked');
 
   return (
     <div className="space-y-3.5 pb-20 animate-fade-in">
@@ -41,17 +46,17 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             PERFORMANCE SUMMARY
           </span>
           <span className="text-[10px] font-black text-[#FFE600] tracking-wide">
-            Rank #3 Global
+            {rankLabel}
           </span>
         </div>
         <div className="grid grid-cols-3 divide-x divide-zinc-800/80 text-center">
           <div className="px-2">
             <span className="text-[9px] font-bold text-zinc-500 block">WIN RATE</span>
-            <span className="text-sm font-black text-white font-mono mt-0.5 block">68.4%</span>
+            <span className="text-sm font-black text-white font-mono mt-0.5 block">{winRate}</span>
           </div>
           <div className="px-2">
             <span className="text-[9px] font-bold text-zinc-500 block">COMBAT XP</span>
-            <span className="text-sm font-black text-[#FFE600] font-mono mt-0.5 block">24.8K</span>
+            <span className="text-sm font-black text-[#FFE600] font-mono mt-0.5 block">{formattedXp}</span>
           </div>
           <div className="px-2">
             <span className="text-[9px] font-bold text-zinc-500 block">WINNINGS</span>

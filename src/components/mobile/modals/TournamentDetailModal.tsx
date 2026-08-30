@@ -81,7 +81,7 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
   const maxSlots = tournament.maxParticipants || 48;
   const entryFee = tournament.entryFee || 15;
   const perKill = tournament.perKillReward || 10;
-  const safeBalance = currentUser.walletBalance ?? 125;
+  const safeBalance = currentUser.walletBalance ?? 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
@@ -317,7 +317,7 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
           <div className="text-xs text-zinc-400">
             {isRegistered ? (
               <span className="text-[#FFE600] font-bold flex items-center gap-1">
-                <Check className="w-3.5 h-3.5" /> Slot #{userRegistration?.slotNumber || 14}/48 Confirmed
+                <Check className="w-3.5 h-3.5" /> Slot #{userRegistration?.slotNumber || 1}/48 Confirmed
               </span>
             ) : (
               <span>Balance: <strong className="text-[#FFE600] font-mono">₹{safeBalance.toFixed(0)}</strong></span>

@@ -118,7 +118,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [viewMode, setViewMode] = useState<ViewMode>('MOBILE');
   const [isMobileFrame, setIsMobileFrame] = useState<boolean>(true);
   const [activeTournamentId, setActiveTournamentId] = useState<string | null>(null);
-  const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>('FF-2026-8X73KD');
+  const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
 
   const [tournaments, setTournaments] = useState<Tournament[]>(INITIAL_TOURNAMENTS);
   const [teams, setTeams] = useState<Team[]>(INITIAL_TEAMS);
@@ -362,7 +362,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       teamId,
       teamName: regTeam?.name,
       playerName: currentUser.displayName,
-      gameUid: currentUser.gamerProfile?.gameUid || '982347101',
+      gameUid: currentUser.gamerProfile?.gameUid || currentUser.username || 'PLAYER',
       upiId: upiId || currentUser.upiId,
       email: currentUser.email,
       status: 'Confirmed',
@@ -644,7 +644,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userId: currentUser.id,
       teamId: currentUser.teamId,
       playerName: currentUser.displayName,
-      gameUid: currentUser.gamerProfile?.gameUid || '982347101',
+      gameUid: currentUser.gamerProfile?.gameUid || currentUser.username || 'PLAYER',
       kills: data.kills,
       placement: data.placement,
       totalPoints: scoreBreakdown.totalPoints,
@@ -661,7 +661,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Update wallet and rating if auto approved
     if (isAutoApproved) {
       setCurrentUser((prev) => {
-        const newRating = prev.gamerProfile ? Math.max(800, prev.gamerProfile.rating + ratingChange) : 1680;
+        const newRating = prev.gamerProfile ? Math.max(800, prev.gamerProfile.rating + ratingChange) : 1000;
         const newTier = calculateTierFromRating(newRating);
         return {
           ...prev,

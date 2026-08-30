@@ -90,6 +90,7 @@ export interface User {
   instagram?: string;
   youtube?: string;
   discord?: string;
+  upiId?: string;
   createdAt: string;
 }
 
@@ -190,6 +191,8 @@ export interface Registration {
   teamName?: string;
   playerName: string;
   gameUid: string;
+  upiId?: string;
+  email?: string;
   status: 'Pending' | 'Confirmed' | 'Rejected' | 'Cancelled' | 'Waitlisted';
   slotNumber: number;
   registeredAt: string;

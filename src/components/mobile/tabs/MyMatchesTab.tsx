@@ -65,7 +65,7 @@ export const MyMatchesTab: React.FC<MyMatchesTabProps> = ({
           </span>
         </div>
         <span className="text-[11px] font-mono font-bold text-[#FFE600]">
-          UID: {currentUser.gamerProfile?.gameUid || '982347101'}
+          UID: {currentUser.gamerProfile?.gameUid || 'Not Set'}
         </span>
       </div>
 
@@ -113,7 +113,7 @@ export const MyMatchesTab: React.FC<MyMatchesTabProps> = ({
 
                   <div className="px-2.5 py-1 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/30 text-center shrink-0">
                     <span className="text-[8px] font-black uppercase text-[#FFE600] block">YOUR SLOT</span>
-                    <span className="text-sm font-mono font-black text-white">#{reg?.slotNumber || 14}</span>
+                    <span className="text-sm font-mono font-black text-white">#{reg?.slotNumber || 1}</span>
                   </div>
                 </div>
 

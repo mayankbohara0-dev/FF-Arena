@@ -33,6 +33,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
     setActiveRole,
     teams,
     colleges,
+    logout,
   } = useApp();
 
   if (!isOpen) return null;
@@ -78,7 +79,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 )}
               </div>
               <p className="text-[11px] font-mono text-[#FFE600] font-bold">
-                IGN: {currentUser.gamerProfile?.gameName || 'VORTEX_REX'}
+                IGN: {currentUser.gamerProfile?.gameName || currentUser.displayName || 'Player'}
               </p>
               <div className="mt-1 flex items-center gap-1.5">
                 {currentUser.gamerProfile && (
@@ -89,8 +90,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           </div>
 
           <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-400">
-            <span>UID: <strong className="text-white">{currentUser.gamerProfile?.gameUid || '982347101'}</strong></span>
-            <span className="text-[#FFE600] font-bold">Rank #{currentUser.gamerProfile?.rank || 42}</span>
+            <span>UID: <strong className="text-white">{currentUser.gamerProfile?.gameUid || 'Not Set'}</strong></span>
+            <span className="text-[#FFE600] font-bold">{currentUser.gamerProfile?.rank ? `Rank #${currentUser.gamerProfile.rank}` : 'Unranked'}</span>
           </div>
         </div>
 
@@ -205,9 +206,21 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950 text-center text-[11px] text-slate-500 font-mono flex items-center justify-between">
-          <span>FF Arena Mobile</span>
-          <span className="text-[#FFE600] font-bold">v1.0.0</span>
+        <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
+          <div className="text-[11px] text-slate-500 font-mono">
+            <span>FF Arena</span>
+            <span className="ml-1 text-[#FFE600] font-bold">v1.0.0</span>
+          </div>
+          <button
+            onClick={() => {
+              tapFeedback();
+              onClose();
+              logout();
+            }}
+            className="px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-500/30 text-red-400 font-bold text-[10px] hover:bg-red-950/60 transition cursor-pointer"
+          >
+            🚪 Sign Out
+          </button>
         </div>
       </div>
     </div>

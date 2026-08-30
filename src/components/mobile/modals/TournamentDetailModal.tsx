@@ -36,6 +36,8 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'ROOM' | 'SCORING' | 'RULES' | 'PARTICIPANTS'>('OVERVIEW');
   const [isRegistering, setIsRegistering] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showUpiStep, setShowUpiStep] = useState(false);
+  const [upiIdInput, setUpiIdInput] = useState(currentUser.upiId || '');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const tourneyMatches = matches.filter((m: any) => m.tournamentId === tournament.id);
@@ -54,15 +56,25 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
 
   const handleConfirmRegistration = async () => {
     setIsRegistering(true);
-    const res = await payTournamentEntry(tournament.id);
+    const res = await payTournamentEntry(tournament.id, undefined, upiIdInput.trim() || undefined);
     setIsRegistering(false);
     setShowInstructions(false);
+    setShowUpiStep(false);
     if (!res.success) {
       alert(res.message);
     } else {
       if (activeMatch?.isRoomReleased) {
         setActiveTab('ROOM');
       }
+    }
+  };
+
+  // Step: show UPI collection before proceeding to confirmation
+  const handleStartRegistration = () => {
+    if (!upiIdInput.trim()) {
+      setShowUpiStep(true);
+    } else {
+      setShowInstructions(true);
     }
   };
 
@@ -314,7 +326,7 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
 
           {!isRegistered ? (
             <button
-              onClick={() => setShowInstructions(true)}
+              onClick={handleStartRegistration}
               disabled={isRegistering || tournament.currentParticipants >= maxSlots}
               className="px-5 py-2 rounded-xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs tracking-wider uppercase transition active:scale-95 shadow-glow-yellow-sm"
             >
@@ -330,6 +342,62 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
           )}
         </div>
       </div>
+
+      {/* UPI Collection Modal — shown before instructions if UPI not set */}
+      {showUpiStep && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+          <div className="bg-[#0E0E12] border border-[#FFE600]/30 rounded-3xl w-full max-w-sm p-5 space-y-4 shadow-2xl animate-scale-up">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/30 flex items-center justify-center mx-auto mb-2">
+                <CreditCard className="w-6 h-6 text-[#FFE600]" />
+              </div>
+              <h3 className="font-black text-base text-white">Add Your UPI ID</h3>
+              <p className="text-xs text-zinc-400 mt-1">
+                Required to receive prize money directly to your account when you win.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider block mb-1">
+                Your UPI ID (e.g. name@okaxis)
+              </label>
+              <input
+                type="text"
+                value={upiIdInput}
+                onChange={(e) => setUpiIdInput(e.target.value)}
+                placeholder="yourname@okaxis"
+                className="w-full bg-[#050507] border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none focus:border-[#FFE600] transition"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowUpiStep(false); }}
+                className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 font-bold text-xs transition hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUpiStep(false);
+                  setShowInstructions(true);
+                }}
+                disabled={!upiIdInput.trim() || !upiIdInput.includes('@')}
+                className="flex-1 py-2.5 rounded-xl bg-[#FFE600] text-black font-black text-xs uppercase shadow-glow-yellow-sm transition active:scale-95 disabled:opacity-40"
+              >
+                SAVE & CONTINUE
+              </button>
+            </div>
+
+            <p className="text-[9px] text-zinc-600 text-center">
+              Your UPI ID is only used for prize transfers. It stays private.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Instructions & Payout Explanation Modal */}
       {showInstructions && (

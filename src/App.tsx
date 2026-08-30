@@ -61,9 +61,57 @@ const MainAppContent: React.FC = () => {
       try {
         const onboarded = localStorage.getItem('ff_onboarded');
         const user      = localStorage.getItem('ff_user');
-        if (!onboarded)  setAppState('ONBOARDING');
-        else if (!user)  setAppState('LOGIN');
-        else             setAppState('APP');
+
+        if (!onboarded) {
+          setAppState('ONBOARDING');
+        } else if (!user) {
+          setAppState('LOGIN');
+        } else {
+          // Bridge: if ff_arena_user is missing but ff_user exists, seed it
+          // This handles users who logged in before the fix was deployed
+          const arenaUser = localStorage.getItem('ff_arena_user');
+          if (!arenaUser) {
+            try {
+              const parsed = JSON.parse(user);
+              const bridged = {
+                id: parsed.uid || `usr-${Date.now()}`,
+                email: parsed.email || '',
+                username: (parsed.gameName || 'PLAYER').toLowerCase().replace(/\s+/g, '_'),
+                displayName: parsed.gameName || 'PLAYER',
+                gamerProfile: {
+                  id: `gp-${parsed.uid}`,
+                  userId: parsed.uid || '',
+                  gameUid: parsed.gameUid || '',
+                  gameName: parsed.gameName || 'PLAYER',
+                  region: 'IND',
+                  rating: 1200,
+                  tier: 'Gold',
+                  rank: 0,
+                  totalMatches: 0,
+                  totalTournaments: 0,
+                  totalWins: 0,
+                  top3Finishes: 0,
+                  top10Finishes: 0,
+                  totalKills: 0,
+                  avgKills: 0,
+                  avgPlacement: 0,
+                  winRate: 0,
+                  headshotRate: 0,
+                  verified: false,
+                },
+                walletBalance: 0,
+                winningsBalance: 0,
+                role: 'PLAYER',
+                status: 'Active',
+                createdAt: new Date().toISOString(),
+              };
+              localStorage.setItem('ff_arena_user', JSON.stringify(bridged));
+            } catch {
+              // ignore, AppContext falls back to mock data
+            }
+          }
+          setAppState('APP');
+        }
       } catch {
         setAppState('ONBOARDING');
       }

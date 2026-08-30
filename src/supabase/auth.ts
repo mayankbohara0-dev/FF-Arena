@@ -1,6 +1,6 @@
 /**
  * Supabase 100% Free Email OTP & Player Profile Service — FF Arena
- * Includes robust 5-second timeout protection so UI never hangs
+ * Includes robust multi-type OTP fallback & timeout protection
  */
 import { supabase, isSupabaseConfigured } from './client';
 import { upsertUserProfile } from './api';
@@ -8,7 +8,7 @@ import { upsertUserProfile } from './api';
 /**
  * Timeout wrapper to prevent hanging requests on mobile networks
  */
-function withTimeout<T>(promise: Promise<T>, ms = 6000, fallbackVal: T): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, ms = 8000, fallbackVal: T): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((resolve) => setTimeout(() => resolve(fallbackVal), ms)),
@@ -33,63 +33,76 @@ export async function sendEmailOtp(email: string): Promise<{ success: boolean; e
       },
     });
 
-    const { error } = await withTimeout(apiCall, 5000, { data: null, error: null } as any);
+    const { error } = await withTimeout(apiCall, 8000, { data: null, error: null } as any);
 
     if (error) {
-      console.warn('[Supabase Auth] Notice:', error.message);
+      console.warn('[Supabase Auth] sendEmailOtp notice:', error.message);
       if (error.message.includes('valid email')) {
         return { success: false, error: 'Please enter a valid email address.' };
       }
-      // Rate limit or SMTP notice — allow proceeding to OTP step smoothly
-      return { success: true };
+      if (error.message.includes('rate limit') || error.message.includes('security')) {
+        return { success: false, error: 'Too many requests. Please wait a minute and try again.' };
+      }
+      return { success: false, error: error.message };
     }
     return { success: true };
   } catch (err: any) {
-    console.warn('[Supabase Auth] sendEmailOtp caught fallback:', err);
-    return { success: true }; // Never block the user
+    console.error('[Supabase Auth] sendEmailOtp exception:', err);
+    return { success: false, error: 'Network error. Please try again.' };
   }
 }
 
 /**
  * Verifies the 6-Digit Email OTP with Supabase.
+ * Tries 'email' type first (returning users), then 'signup' (new users).
  */
 export async function verifyEmailOtp(
   email: string,
   token: string
 ): Promise<{ success: boolean; session?: any; error?: string }> {
   if (!isSupabaseConfigured()) {
+    // Dev/mock mode — any 6-digit code passes
     return { success: true };
   }
 
   const cleanEmail = email.trim().toLowerCase();
   const cleanToken = token.trim();
 
-  // Instant demo code acceptance for seamless testing
-  if (cleanToken === '123456') {
-    return { success: true };
-  }
-
   try {
-    const apiCall = supabase.auth.verifyOtp({
-      email: cleanEmail,
-      token: cleanToken,
-      type: 'email',
-    });
+    // 1. Try 'email' OTP type (used for returning / existing users)
+    const res = await withTimeout(
+      supabase.auth.verifyOtp({ email: cleanEmail, token: cleanToken, type: 'email' }),
+      10000,
+      { data: { session: null }, error: { message: 'timeout' } } as any
+    );
 
-    const res = await withTimeout(apiCall, 5000, { data: { session: null }, error: null } as any);
-
-    if (res.error) {
-      console.warn('[Supabase Auth] verifyEmailOtp notice:', res.error.message);
-      // If token verification failed, check if 6 digits provided
-      if (cleanToken.length === 6) {
-        return { success: true };
-      }
-      return { success: false, error: 'Invalid or expired OTP. Please try again.' };
+    if (res.data?.session) {
+      return { success: true, session: res.data.session };
     }
-    return { success: true, session: res.data?.session };
+
+    // 2. Try 'signup' OTP type (used for brand-new users)
+    const resSignup = await withTimeout(
+      supabase.auth.verifyOtp({ email: cleanEmail, token: cleanToken, type: 'signup' }),
+      10000,
+      { data: { session: null }, error: { message: 'timeout' } } as any
+    );
+
+    if (resSignup.data?.session) {
+      return { success: true, session: resSignup.data.session };
+    }
+
+    // Both failed — surface a clear error
+    const errMsg = res.error?.message || resSignup.error?.message || '';
+    if (errMsg === 'timeout') {
+      return { success: false, error: 'Connection timed out. Please check your internet and try again.' };
+    }
+    if (errMsg.toLowerCase().includes('expired') || errMsg.toLowerCase().includes('invalid')) {
+      return { success: false, error: 'OTP expired or invalid. Please request a new code.' };
+    }
+    return { success: false, error: 'Invalid verification code. Please double-check and try again.' };
   } catch (err: any) {
-    console.warn('[Supabase Auth] verifyEmailOtp caught fallback:', err);
-    return { success: true };
+    console.error('[Supabase Auth] verifyEmailOtp exception:', err);
+    return { success: false, error: 'Verification failed. Please try again.' };
   }
 }
 

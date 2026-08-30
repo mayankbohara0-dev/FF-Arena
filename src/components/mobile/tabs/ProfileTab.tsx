@@ -44,9 +44,8 @@ const KillsChart: React.FC<{ data: number[] }> = ({ data }) => {
 };
 
 export const ProfileTab: React.FC = () => {
-  const { currentUser, achievements } = useApp();
+  const { currentUser, achievements, logout } = useApp();
   const [copied, setCopied] = useState(false);
-  const [showInstall, setShowInstall] = useState(false);
 
   const handleCopyUid = () => {
     tapFeedback();
@@ -55,8 +54,9 @@ export const ProfileTab: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Mock kills history for last 10 matches
-  const killsHistory = [3, 7, 5, 9, 2, 11, 8, 6, 4, 8];
+  // Kills history for completed matches
+  const totalMatches = currentUser.gamerProfile?.totalMatches || 0;
+  const killsHistory = totalMatches > 0 ? [currentUser.gamerProfile?.avgKills || 0] : [];
 
   return (
     <div className="space-y-4 pb-20 animate-fade-in">
@@ -66,68 +66,73 @@ export const ProfileTab: React.FC = () => {
         <div className="relative mb-3">
           <div className="w-20 h-20 rounded-full border-2 border-[#FFE600] overflow-hidden shadow-glow-yellow p-0.5">
             <img
-              src={currentUser.avatarUrl}
+              src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
               alt={currentUser.displayName}
               className="w-full h-full object-cover rounded-full"
             />
           </div>
-          <span className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded-full bg-[#FFE600] text-black font-black text-[9px] uppercase shadow-md">PRO</span>
+          <span className="absolute -bottom-2 -right-1 px-2 py-0.5 rounded-full bg-[#FFE600] text-black font-black text-[9px] uppercase shadow-md">
+            {currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' ? 'ADMIN' : 'PLAYER'}
+          </span>
         </div>
 
         <h2 className="font-display font-black text-lg text-white">
-          {currentUser.gamerProfile?.gameName || 'VORTEX_REX'}
+          {currentUser.gamerProfile?.gameName || currentUser.displayName || 'Player'}
         </h2>
         <p className="text-[10px] font-bold text-[#FFE600] tracking-widest uppercase mt-0.5">
-          ELITE SCOUT • ROGUE SYNDICATE
+          {currentUser.gamerProfile?.tier ? `${currentUser.gamerProfile.tier.toUpperCase()} TIER` : 'FREE FIRE MAX COMPETITOR'}
         </p>
 
         <button
           onClick={handleCopyUid}
           className="mt-2.5 px-3 py-1 rounded-xl bg-[#050507] border border-zinc-800 text-[10px] text-zinc-400 font-mono flex items-center gap-1.5 hover:border-[#FFE600] transition"
         >
-          <span>UID: {currentUser.gamerProfile?.gameUid || '982347101'}</span>
+          <span>UID: {currentUser.gamerProfile?.gameUid || 'Not Linked'}</span>
           {copied ? <Check className="w-3 h-3 text-[#FFE600]" /> : <Copy className="w-3 h-3" />}
         </button>
 
         {/* Core Metrics */}
         <div className="grid grid-cols-3 divide-x divide-zinc-800/80 w-full pt-4 mt-4 border-t border-zinc-800/80">
           <div>
-            <span className="text-base font-black text-white font-mono block">1,240</span>
+            <span className="text-base font-black text-white font-mono block">{currentUser.gamerProfile?.totalMatches ?? 0}</span>
             <span className="text-[9px] font-bold text-zinc-500 uppercase">MATCHES</span>
           </div>
           <div>
-            <span className="text-base font-black text-[#FFE600] font-mono block">68%</span>
+            <span className="text-base font-black text-[#FFE600] font-mono block">
+              {currentUser.gamerProfile ? `${currentUser.gamerProfile.winRate.toFixed(0)}%` : '0%'}
+            </span>
             <span className="text-[9px] font-bold text-zinc-500 uppercase">WIN RATE</span>
           </div>
           <div>
-            <span className="text-base font-black text-white font-mono block">4.2</span>
-            <span className="text-[9px] font-bold text-zinc-500 uppercase">K/D RATIO</span>
+            <span className="text-base font-black text-white font-mono block">
+              {currentUser.gamerProfile ? currentUser.gamerProfile.avgKills.toFixed(1) : '0.0'}
+            </span>
+            <span className="text-[9px] font-bold text-zinc-500 uppercase">AVG KILLS</span>
           </div>
         </div>
       </div>
 
       {/* 2. Kills History Chart */}
-      <div className="p-4 rounded-3xl bg-[#0E0E12] border border-zinc-800/80 shadow-card-dark space-y-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart2 className="w-4 h-4 text-[#FFE600]" />
-            <span className="text-[10px] font-black uppercase text-zinc-300 tracking-wider">KILLS — LAST 10 MATCHES</span>
-          </div>
-          <span className="text-[10px] text-zinc-500 font-mono">avg {(killsHistory.reduce((a, b) => a + b, 0) / killsHistory.length).toFixed(1)} kills</span>
-        </div>
-
-        <KillsChart data={killsHistory} />
-
-        {/* Match labels */}
-        <div className="flex justify-between px-2">
-          {killsHistory.map((k, i) => (
-            <div key={i} className="flex flex-col items-center gap-0.5">
-              <span className="text-[8px] font-mono font-bold text-[#FFE600]">{k}</span>
-              <span className="text-[7px] text-zinc-700">M{i + 1}</span>
+      {killsHistory.length > 0 ? (
+        <div className="p-4 rounded-3xl bg-[#0E0E12] border border-zinc-800/80 shadow-card-dark space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="w-4 h-4 text-[#FFE600]" />
+              <span className="text-[10px] font-black uppercase text-zinc-300 tracking-wider">KILLS HISTORY</span>
             </div>
-          ))}
+            <span className="text-[10px] text-zinc-500 font-mono">avg {(killsHistory.reduce((a, b) => a + b, 0) / killsHistory.length).toFixed(1)} kills</span>
+          </div>
+
+          <KillsChart data={killsHistory} />
         </div>
-      </div>
+      ) : (
+        <div className="p-4 rounded-3xl bg-[#0E0E12] border border-zinc-800/80 shadow-card-dark text-center space-y-1">
+          <BarChart2 className="w-5 h-5 text-zinc-600 mx-auto" />
+          <h5 className="font-bold text-xs text-white">Performance Analytics</h5>
+          <p className="text-[10px] text-zinc-500">Kills and match charts will appear here as you play official matches.</p>
+        </div>
+      )}
+
 
       {/* 3. Achievements */}
       <div className="space-y-2">
@@ -154,17 +159,20 @@ export const ProfileTab: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Settings / PWA Install */}
+      {/* 4. Settings */}
       <div className="p-4 rounded-2xl bg-[#0E0E12] border border-zinc-800/80 space-y-3">
-        <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider block">APP SETTINGS</span>
+        <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider block">ACCOUNT</span>
 
-        <button
-          onClick={() => { tapFeedback(); localStorage.removeItem('ff_onboarded'); localStorage.removeItem('ff_user'); window.location.reload(); }}
-          className="w-full py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 font-bold text-xs flex items-center gap-2 px-3 hover:text-white transition active:scale-95"
-        >
-          <span>🔄</span>
-          <span>Reset Onboarding & Login</span>
-        </button>
+        {/* UPI ID display */}
+        {currentUser.upiId && (
+          <div className="p-3 rounded-xl bg-[#050507] border border-zinc-800 flex items-center justify-between">
+            <div>
+              <span className="text-[9px] font-bold text-zinc-500 uppercase block">Prize UPI ID</span>
+              <span className="text-xs font-mono text-white">{currentUser.upiId}</span>
+            </div>
+            <span className="text-[9px] text-green-400 font-bold">✓ SET</span>
+          </div>
+        )}
 
         <button
           onClick={() => {
@@ -177,6 +185,17 @@ export const ProfileTab: React.FC = () => {
         >
           <span>📤</span>
           <span>Share FF Arena App</span>
+        </button>
+
+        <button
+          onClick={() => {
+            tapFeedback();
+            logout();
+          }}
+          className="w-full py-2.5 rounded-xl bg-red-950/40 border border-red-500/30 text-red-400 font-bold text-xs flex items-center justify-center gap-2 px-3 hover:bg-red-950/60 transition active:scale-95 cursor-pointer"
+        >
+          <span>🚪</span>
+          <span>Sign Out</span>
         </button>
       </div>
     </div>

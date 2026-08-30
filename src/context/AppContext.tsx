@@ -75,8 +75,8 @@ interface AppContextType {
   // Business logic methods
   addCash: (amount: number) => void;
   withdrawWinnings: (amount: number, upiId: string) => Promise<{ success: boolean; message: string }>;
-  payTournamentEntry: (tournamentId: string, teamId?: string) => Promise<{ success: boolean; message: string; slotNumber?: number }>;
-  registerForTournament: (tournamentId: string, teamId?: string) => Promise<{ success: boolean; message: string }>;
+  payTournamentEntry: (tournamentId: string, teamId?: string, upiId?: string) => Promise<{ success: boolean; message: string; slotNumber?: number }>;
+  registerForTournament: (tournamentId: string, teamId?: string, upiId?: string) => Promise<{ success: boolean; message: string }>;
   createTournament: (newTourney: Partial<Tournament>) => Promise<Tournament>;
   createTeam: (name: string, tag: string, collegeId?: string) => Promise<Team>;
   inviteToTeam: (teamId: string, gameUidOrUser: string) => Promise<boolean>;
@@ -90,6 +90,7 @@ interface AppContextType {
   addNotification: (title: string, body: string, type: PushNotification['type'], dataPayload?: Record<string, any>) => void;
   triggerConfetti: () => void;
   updateUserProfile: (updates: Partial<User>) => void;
+  logout: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -131,10 +132,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<PushNotification[]>(INITIAL_NOTIFICATIONS);
   const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>(INITIAL_WALLET_TRANSACTIONS);
 
-  // Sync to local storage
+  // Sync to local storage & listen for storage changes from login
   useEffect(() => {
-    localStorage.setItem('ff_arena_user', JSON.stringify(currentUser));
+    if (currentUser.id !== 'usr-default' && currentUser.email) {
+      localStorage.setItem('ff_arena_user', JSON.stringify(currentUser));
+    }
   }, [currentUser]);
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const saved = localStorage.getItem('ff_arena_user');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setCurrentUser((prev) => ({ ...prev, ...parsed }));
+          if (parsed.role) setActiveRoleState(parsed.role);
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   // ── SUPABASE REALTIME & DATABASE SYNC ─────────────────────────────────────────
   useEffect(() => {
@@ -173,6 +193,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateUserProfile = (updates: Partial<User>) => {
     setCurrentUser((prev) => ({ ...prev, ...updates }));
+  };
+
+  const logout = () => {
+    localStorage.removeItem('ff_user');
+    localStorage.removeItem('ff_arena_user');
+    localStorage.removeItem('ff_onboarded');
+    localStorage.removeItem('ff_kyc');
+    setCurrentUser(INITIAL_CURRENT_USER);
+    window.location.href = '/';
   };
 
   const triggerConfetti = () => {
@@ -283,7 +312,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // 3. TOURNAMENT: PAY ENTRY & BOOK SLOT (₹15 Entry Fee, 48 Slots Trigger)
-  const payTournamentEntry = async (tournamentId: string, teamId?: string): Promise<{ success: boolean; message: string; slotNumber?: number }> => {
+  const payTournamentEntry = async (tournamentId: string, teamId?: string, upiId?: string): Promise<{ success: boolean; message: string; slotNumber?: number }> => {
     const tournament = tournaments.find((t) => t.id === tournamentId);
     if (!tournament) return { success: false, message: 'Tournament not found.' };
 
@@ -334,10 +363,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       teamName: regTeam?.name,
       playerName: currentUser.displayName,
       gameUid: currentUser.gamerProfile?.gameUid || '982347101',
+      upiId: upiId || currentUser.upiId,
+      email: currentUser.email,
       status: 'Confirmed',
       slotNumber: assignedSlot,
       registeredAt: new Date().toISOString(),
     };
+
+    // Save UPI ID to user profile for future use
+    if (upiId) {
+      setCurrentUser((prev) => ({ ...prev, upiId }));
+    }
 
     setRegistrations((prev) => [...prev, newReg]);
 
@@ -399,8 +435,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  const registerForTournament = async (tournamentId: string, teamId?: string) => {
-    return payTournamentEntry(tournamentId, teamId);
+  const registerForTournament = async (tournamentId: string, teamId?: string, upiId?: string) => {
+    return payTournamentEntry(tournamentId, teamId, upiId);
   };
 
   // Create Tournament (ADMIN ONLY)
@@ -818,6 +854,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addNotification,
         triggerConfetti,
         updateUserProfile,
+        logout,
       }}
     >
       {children}

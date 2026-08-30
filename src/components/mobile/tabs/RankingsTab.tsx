@@ -25,12 +25,12 @@ export const RankingsTab: React.FC = () => {
     },
     {
       rank: 1,
-      name: 'VORTEX_REX',
-      uid: currentUser.gamerProfile?.gameUid || '982347101',
-      avatar: currentUser.avatarUrl,
-      kills: 840,
-      won: '₹8,420',
-      tier: 'Grandmaster 👑',
+      name: currentUser.gamerProfile?.gameName || currentUser.displayName || 'You',
+      uid: currentUser.gamerProfile?.gameUid || '—',
+      avatar: currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      kills: currentUser.gamerProfile?.totalKills || 0,
+      won: `₹${((currentUser.gamerProfile?.totalKills || 0) * 10).toLocaleString('en-IN')}`,
+      tier: currentUser.gamerProfile?.tier ? `${currentUser.gamerProfile.tier} 👑` : 'Unranked',
       isYou: true,
     },
     {

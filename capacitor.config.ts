@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'FF Arena',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    cleartext: true
   },
   plugins: {
     PushNotifications: {

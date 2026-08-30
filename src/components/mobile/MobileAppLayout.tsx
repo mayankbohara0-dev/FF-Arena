@@ -95,7 +95,8 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
     setShowInstallBanner(false);
   };
 
-  const safeBalance = currentUser.walletBalance ?? 125;
+  const safeBalance = currentUser.walletBalance ?? 0;
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
 
   const handleNav = (tab: TabName) => {
     tapFeedback();
@@ -172,11 +173,11 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
             {/* Avatar */}
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-7 h-7 rounded-full border-2 border-[#FFE600] overflow-hidden shrink-0 shadow-glow-yellow-sm">
-                <img src={currentUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                <img src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} alt="" className="w-full h-full object-cover" />
               </div>
               <div className="min-w-0 hidden xs:block">
                 <p className="font-display font-black text-[11px] text-white leading-none truncate">
-                  {currentUser.gamerProfile?.gameName || currentUser.username.toUpperCase()}
+                  {currentUser.gamerProfile?.gameName || currentUser.displayName || 'Player'}
                 </p>
                 <span className="text-[8px] text-[#FFE600] font-bold tracking-wider">
                   {viewMode === 'ADMIN' ? '🛡️ ADMIN' : 'PRO LEAGUE'}
@@ -187,6 +188,22 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
 
           {/* Right */}
           <div className="flex items-center gap-1.5 shrink-0">
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  tapFeedback();
+                  setViewMode(viewMode === 'ADMIN' ? 'MOBILE' : 'ADMIN');
+                }}
+                className={`px-2 py-1 rounded-xl text-[10px] font-black uppercase font-mono transition border ${
+                  viewMode === 'ADMIN'
+                    ? 'bg-purple-600 border-purple-400 text-white shadow-glow-purple'
+                    : 'bg-purple-950/40 border-purple-500/40 text-purple-300 hover:bg-purple-900/50'
+                }`}
+              >
+                🛡️ ADMIN
+              </button>
+            )}
+
             <button
               onClick={() => handleNav('WALLET')}
               className="flex items-center gap-1 px-2 py-1 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/30 text-[#FFE600] font-mono text-[11px] font-black active:scale-95 transition"

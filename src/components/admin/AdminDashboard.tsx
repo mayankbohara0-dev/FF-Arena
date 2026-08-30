@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ShieldAlert,
   Users,
@@ -18,6 +18,10 @@ import {
   DollarSign,
   ChevronRight,
   ShieldCheck,
+  Download,
+  MessageSquare,
+  TrendingUp,
+  IndianRupee,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { tapFeedback, booyahFeedback, successFeedback } from '../../services/soundService';
@@ -39,88 +43,27 @@ interface WinnerPayout {
 export const AdminDashboard: React.FC = () => {
   const {
     tournaments,
+    registrations,
     createTournament,
     updateMatchRoom,
     addNotification,
     setViewMode,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'PAYOUTS' | 'TOURNAMENTS' | 'FRAUD'>('PAYOUTS');
+  const [activeTab, setActiveTab] = useState<'PAYOUTS' | 'PLAYERS' | 'TOURNAMENTS' | 'FRAUD'>('PLAYERS');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [playerSearch, setPlayerSearch] = useState('');
 
   // Admin New Tournament State
   const [isCreatingTourney, setIsCreatingTourney] = useState(false);
   const [tourneyName, setTourneyName] = useState('Bermuda 48-Player Blitz #201');
   const [tourneyMap, setTourneyMap] = useState<'Bermuda' | 'Purgatory' | 'Kalahari'>('Bermuda');
 
-  // Match Winners & Kill Bounty Payout Queue
-  const [winnerPayouts, setWinnerPayouts] = useState<WinnerPayout[]>([
-    {
-      id: 'win-1',
-      tournamentName: 'Bermuda 48P Flash Blitz #101',
-      playerName: 'Aman Sharma',
-      gameName: 'VORTEX_REX',
-      gameUid: '982347101',
-      rank: 1, // Booyah
-      kills: 8,
-      prizeAmount: 100, // 8 kills * ₹10 + ₹20 Booyah = ₹100
-      upiId: 'aman@okaxis',
-      status: 'PENDING',
-      timestamp: '10m ago',
-    },
-    {
-      id: 'win-2',
-      tournamentName: 'Bermuda 48P Flash Blitz #101',
-      playerName: 'Rohit Kumar',
-      gameName: 'SHADOW_SNIPER',
-      gameUid: '871920391',
-      rank: 2, // 2nd Place
-      kills: 5,
-      prizeAmount: 65, // 5 kills * ₹10 + ₹15 podium = ₹65
-      upiId: 'rohit@ybl',
-      status: 'PENDING',
-      timestamp: '12m ago',
-    },
-    {
-      id: 'win-3',
-      tournamentName: 'Bermuda 48P Flash Blitz #101',
-      playerName: 'Sahil Verma',
-      gameName: 'DEADLY_VIPER',
-      gameUid: '992018471',
-      rank: 3, // 3rd Place
-      kills: 3,
-      prizeAmount: 45, // 3 kills * ₹10 + ₹15 podium = ₹45
-      upiId: 'sahil@paytm',
-      status: 'PENDING',
-      timestamp: '15m ago',
-    },
-    {
-      id: 'win-4',
-      tournamentName: 'Purgatory Duo Warfare #88',
-      playerName: 'Vikram Singh',
-      gameName: 'PRO_FRAGGER_99',
-      gameUid: '918273645',
-      rank: 4, // Kill bounty only
-      kills: 7,
-      prizeAmount: 70, // 7 kills * ₹10 = ₹70
-      upiId: 'vikram@oksbi',
-      status: 'PENDING',
-      timestamp: '25m ago',
-    },
-  ]);
+  // Match Winners & Kill Bounty Payout Queue (real dynamic payouts)
+  const [winnerPayouts, setWinnerPayouts] = useState<WinnerPayout[]>([]);
 
-  // Anti-cheat reports
-  const [fraudAlerts, setFraudAlerts] = useState([
-    {
-      id: 'fa-1',
-      type: 'DUPLICATE_UID',
-      severity: 'HIGH',
-      title: 'Duplicate Free Fire UID Detected',
-      details: 'Player "Speedy_FF" registered with UID 982347101, already bound to "Aman Sharma".',
-      status: 'PENDING',
-      timestamp: '10m ago',
-    },
-  ]);
+  // Anti-cheat reports (clean default)
+  const [fraudAlerts, setFraudAlerts] = useState<any[]>([]);
 
   const handleAdminCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,77 +115,266 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 animate-fade-in text-slate-200">
       {/* Header Banner */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/50 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/50 border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-purple-500/20 text-purple-300 border border-purple-500/40">
               🛡️ ADMIN GOVERNANCE PORTAL
             </span>
-            <span className="text-slate-400 text-xs font-mono">Whitelisted Admin Access</span>
           </div>
-          <h2 className="font-display font-black text-2xl sm:text-3xl text-white tracking-wide">
-            Match Control & Simple Winner Payouts
-          </h2>
-          <p className="text-xs text-slate-300 mt-0.5">
-            Transfer kill bounties and Booyah bonuses directly to players with 1-tap Google Pay / PhonePe.
-          </p>
+          <h2 className="font-display font-black text-xl sm:text-2xl text-white tracking-wide">FF Arena Control Center</h2>
+          <p className="text-xs text-slate-400 mt-0.5">Manage players, matches, payouts and room credentials.</p>
         </div>
-
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => { tapFeedback(); setViewMode('MOBILE'); }}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:text-white text-xs font-bold transition"
-          >
-            ← Back to Player App
+          <button onClick={() => { tapFeedback(); setViewMode('MOBILE'); }} className="px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 hover:text-white text-xs font-bold transition">
+            ← Player App
           </button>
-          <button
-            onClick={() => { tapFeedback(); setIsCreatingTourney(true); }}
-            className="px-4 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs flex items-center gap-1.5 shadow-glow-yellow-sm transition active:scale-95"
-          >
+          <button onClick={() => { tapFeedback(); setIsCreatingTourney(true); }} className="px-4 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs flex items-center gap-1.5 shadow-glow-yellow-sm transition active:scale-95">
             <PlusCircle className="w-4 h-4" />
-            <span>Publish 48P Match</span>
+            <span>New Match</span>
           </button>
         </div>
       </div>
 
+      {/* Live Stats Banner */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Players', value: registrations.length, icon: Users, color: 'text-[#FFE600]', bg: 'bg-[#FFE600]/10 border-[#FFE600]/20' },
+          { label: 'Fees Collected', value: `₹${registrations.length * 15}`, icon: IndianRupee, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+          { label: 'Pending Payouts', value: `₹${totalPendingAmount}`, icon: Wallet, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+          { label: 'Active Matches', value: tournaments.filter(t => t.status === 'Registration Open' || t.status === 'Live').length, icon: Trophy, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+        ].map((stat) => (
+          <div key={stat.label} className={`p-3.5 rounded-2xl border ${stat.bg} flex items-center gap-3`}>
+            <stat.icon className={`w-5 h-5 ${stat.color} shrink-0`} />
+            <div>
+              <p className={`text-base font-black font-mono ${stat.color}`}>{stat.value}</p>
+              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{stat.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Admin Tabs */}
-      <div className="flex border-b border-slate-800 text-xs font-bold gap-4">
+      <div className="flex border-b border-slate-800 text-xs font-bold gap-4 overflow-x-auto scrollbar-none">
         <button
-          onClick={() => { tapFeedback(); setActiveTab('PAYOUTS'); }}
-          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 ${
-            activeTab === 'PAYOUTS'
+          onClick={() => { tapFeedback(); setActiveTab('PLAYERS'); }}
+          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 shrink-0 ${
+            activeTab === 'PLAYERS'
               ? 'border-[#FFE600] text-[#FFE600]'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
+          <Users className="w-4 h-4" />
+          <span>Registered Players ({registrations.length})</span>
+        </button>
+
+        <button
+          onClick={() => { tapFeedback(); setActiveTab('PAYOUTS'); }}
+          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 shrink-0 ${
+            activeTab === 'PAYOUTS'
+              ? 'border-amber-400 text-amber-400'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
           <Wallet className="w-4 h-4" />
-          <span>⚡ Simple Winner Payouts ({pendingCount})</span>
+          <span>Winner Payouts ({pendingCount})</span>
         </button>
 
         <button
           onClick={() => { tapFeedback(); setActiveTab('TOURNAMENTS'); }}
-          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 ${
+          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 shrink-0 ${
             activeTab === 'TOURNAMENTS'
               ? 'border-purple-500 text-purple-400'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           <Trophy className="w-4 h-4" />
-          <span>48-Player Matches & Custom Rooms ({tournaments.length})</span>
+          <span>Matches & Rooms ({tournaments.length})</span>
         </button>
 
         <button
           onClick={() => { tapFeedback(); setActiveTab('FRAUD'); }}
-          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 ${
+          className={`pb-2.5 border-b-2 transition flex items-center gap-1.5 shrink-0 ${
             activeTab === 'FRAUD'
-              ? 'border-purple-500 text-purple-400'
+              ? 'border-red-500 text-red-400'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
           <ShieldAlert className="w-4 h-4" />
-          <span>Anti-Cheat Sentinel ({fraudAlerts.length})</span>
+          <span>Anti-Cheat ({fraudAlerts.length})</span>
         </button>
       </div>
+
+      {/* ── TAB 0: REGISTERED PLAYERS PER TOURNAMENT ── */}
+      {activeTab === 'PLAYERS' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Search + summary */}
+          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h4 className="font-bold text-sm text-white">ALL REGISTERED PLAYERS</h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {registrations.length > 0
+                    ? `${registrations.length} player${registrations.length > 1 ? 's' : ''} across ${tournaments.length} tournament${tournaments.length > 1 ? 's' : ''}`
+                    : 'No players registered yet.'}
+                </p>
+              </div>
+            </div>
+            {/* Global search */}
+            <div className="flex items-center gap-2 bg-slate-800 rounded-xl px-3 py-2">
+              <Search className="w-4 h-4 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search by player name, IGN, or UID..."
+                value={playerSearch}
+                onChange={(e) => setPlayerSearch(e.target.value)}
+                className="flex-1 bg-transparent text-white text-xs focus:outline-none placeholder:text-slate-600"
+              />
+              {playerSearch && (
+                <button onClick={() => setPlayerSearch('')} className="text-slate-500 hover:text-white text-xs">✕</button>
+              )}
+            </div>
+          </div>
+
+          {tournaments.map((t) => {
+            const tRegs = registrations
+              .filter((r) => r.tournamentId === t.id)
+              .filter((r) => {
+                if (!playerSearch.trim()) return true;
+                const q = playerSearch.toLowerCase();
+                return (
+                  r.playerName?.toLowerCase().includes(q) ||
+                  r.gameUid?.toLowerCase().includes(q) ||
+                  r.teamName?.toLowerCase().includes(q) ||
+                  r.email?.toLowerCase().includes(q)
+                );
+              });
+            const maxSlots = t.maxParticipants || 48;
+            const fillPct = Math.min(100, Math.round((t.currentParticipants / maxSlots) * 100));
+
+            const handleCsvExport = () => {
+              tapFeedback();
+              const allRegs = registrations.filter((r) => r.tournamentId === t.id);
+              const header = 'Slot,Player Name,IGN/Team,FF UID,UPI ID,Email,Registered At';
+              const rows = allRegs.map((r, i) =>
+                [
+                  r.slotNumber || i + 1,
+                  r.playerName || '',
+                  r.teamName || r.playerName || '',
+                  r.gameUid || '',
+                  r.upiId || '',
+                  r.email || '',
+                  r.registeredAt ? new Date(r.registeredAt).toLocaleString('en-IN') : '',
+                ].join(',')
+              );
+              const csv = [header, ...rows].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = `${t.name.replace(/\s+/g, '_')}_players.csv`;
+              a.click();
+            };
+
+            return (
+              <div key={t.id} className="space-y-3">
+                {/* Tournament header with progress */}
+                <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[9px] font-black text-[#FFE600] uppercase tracking-wider">{t.map}</span>
+                      <h5 className="font-bold text-sm text-white">{t.name}</h5>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {tRegs.length > 0 && (
+                        <button
+                          onClick={handleCsvExport}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-[10px] font-bold transition"
+                        >
+                          <Download className="w-3 h-3" />
+                          CSV
+                        </button>
+                      )}
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 shrink-0">
+                        {t.currentParticipants} / {maxSlots}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Slot fill progress bar */}
+                  <div className="space-y-1">
+                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          fillPct >= 100 ? 'bg-green-400' : fillPct >= 75 ? 'bg-[#FFE600]' : 'bg-purple-500'
+                        }`}
+                        style={{ width: `${fillPct}%` }}
+                      />
+                    </div>
+                    <p className="text-[9px] text-slate-500 font-mono">
+                      {fillPct >= 100 ? '✅ FULL — Room should be released' : `${fillPct}% filled — ${maxSlots - t.currentParticipants} slots remaining`}
+                    </p>
+                  </div>
+                </div>
+
+                {tRegs.length === 0 ? (
+                  <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-500 text-center">
+                    {playerSearch ? 'No players match your search in this tournament' : 'No registrations yet'}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-slate-800">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="bg-slate-900 text-slate-400 font-bold uppercase tracking-wider">
+                          <th className="px-3 py-2 text-left">#</th>
+                          <th className="px-3 py-2 text-left">Slot</th>
+                          <th className="px-3 py-2 text-left">Player</th>
+                          <th className="px-3 py-2 text-left">FF UID</th>
+                          <th className="px-3 py-2 text-left">UPI ID</th>
+                          <th className="px-3 py-2 text-left">Joined</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {tRegs.map((r, idx) => (
+                          <tr key={r.id} className="bg-slate-950 hover:bg-slate-900 transition">
+                            <td className="px-3 py-2 text-slate-500 font-mono">{idx + 1}</td>
+                            <td className="px-3 py-2">
+                              <span className="px-1.5 py-0.5 rounded bg-[#FFE600]/10 text-[#FFE600] font-mono font-bold text-[10px]">
+                                #{r.slotNumber || idx + 1}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2">
+                              <p className="text-white font-bold">{r.playerName || 'Unknown'}</p>
+                              <p className="text-[9px] text-slate-500 font-mono">{r.email || ''}</p>
+                            </td>
+                            <td className="px-3 py-2 text-slate-300 font-mono">{r.gameUid || '—'}</td>
+                            <td className="px-3 py-2">
+                              {r.upiId ? (
+                                <span className="text-green-400 font-mono text-[10px]">{r.upiId}</span>
+                              ) : (
+                                <span className="text-slate-600 text-[10px]">Not set</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-slate-500 font-mono text-[10px]">
+                              {r.registeredAt ? new Date(r.registeredAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : 'Just now'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {tournaments.length === 0 && (
+            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+              <Trophy className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+              <p className="text-sm text-slate-400">No tournaments created yet.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── TAB 1: SIMPLE WINNER PAYOUTS ── */}
       {activeTab === 'PAYOUTS' && (
@@ -267,7 +399,14 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           {/* Winner Payout Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {winnerPayouts.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-2">
+              <CheckCircle className="w-8 h-8 text-green-400 mx-auto" />
+              <h5 className="font-bold text-white text-sm">No Pending Payouts</h5>
+              <p className="text-xs text-slate-400">All winner rewards have been cleared or no matches have completed yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {winnerPayouts.map((w) => (
               <div
                 key={w.id}
@@ -352,6 +491,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
 
@@ -446,19 +586,41 @@ export const AdminDashboard: React.FC = () => {
                       />
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const rId = (document.getElementById(`room-${t.id}`) as HTMLInputElement)?.value || '8391047';
-                        const rPass = (document.getElementById(`pass-${t.id}`) as HTMLInputElement)?.value || 'arenaff2026';
-                        updateMatchRoom(`match-${t.id}`, rId, rPass, new Date().toISOString(), true);
-                        successFeedback();
-                        alert(`Custom Room Credentials (ID: ${rId} | Pass: ${rPass}) broadcast to all 48 players!`);
-                      }}
-                      className="w-full py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs uppercase shadow-glow-yellow-sm transition active:scale-95"
-                    >
-                      🚀 PUBLISH ROOM CREDENTIALS NOW
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const rId = (document.getElementById(`room-${t.id}`) as HTMLInputElement)?.value || '8391047';
+                          const rPass = (document.getElementById(`pass-${t.id}`) as HTMLInputElement)?.value || 'arenaff2026';
+                          updateMatchRoom(`match-${t.id}`, rId, rPass, new Date().toISOString(), true);
+                          successFeedback();
+                          addNotification(
+                            '🔐 Room Credentials Published!',
+                            `Room ID: ${rId} | Password: ${rPass} broadcast to all players of ${t.name}!`,
+                            'ROOM_DETAILS'
+                          );
+                        }}
+                        className="flex-1 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs uppercase shadow-glow-yellow-sm transition active:scale-95"
+                      >
+                        🚀 PUBLISH NOW
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          tapFeedback();
+                          const rId = (document.getElementById(`room-${t.id}`) as HTMLInputElement)?.value || '8391047';
+                          const rPass = (document.getElementById(`pass-${t.id}`) as HTMLInputElement)?.value || 'arenaff2026';
+                          const msg = encodeURIComponent(
+                            `🎮 *FF Arena Room Ready!*\n\n🏆 *${t.name}*\n\n🔑 Room ID: *${rId}*\n🔒 Password: *${rPass}*\n\nMap: ${t.map} | ${t.currentParticipants}/48 Players\n\nJoin now and good luck! 🔥\n— FF Arena Admin`
+                          );
+                          window.open(`https://wa.me/?text=${msg}`, '_blank');
+                        }}
+                        className="px-3 py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-xs flex items-center gap-1 transition active:scale-95"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        WA
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -475,43 +637,51 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-xs text-slate-400">Review accounts flagged by the platform anti-cheat engine.</p>
           </div>
 
-          <div className="space-y-3">
-            {fraudAlerts.map((fa) => (
-              <div key={fa.id} className="p-4 rounded-2xl bg-slate-900 border border-red-500/30 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30">
-                      {fa.severity} SEVERITY
-                    </span>
-                    <h5 className="font-bold text-xs text-white">{fa.title}</h5>
+          {fraudAlerts.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-2">
+              <ShieldCheck className="w-8 h-8 text-green-400 mx-auto" />
+              <h5 className="font-bold text-white text-sm">Sentinel Active & Clean</h5>
+              <p className="text-xs text-slate-400">No suspicious activities, duplicate UIDs, or emulator flags detected.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {fraudAlerts.map((fa) => (
+                <div key={fa.id} className="p-4 rounded-2xl bg-slate-900 border border-red-500/30 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30">
+                        {fa.severity} SEVERITY
+                      </span>
+                      <h5 className="font-bold text-xs text-white">{fa.title}</h5>
+                    </div>
+                    <p className="text-xs text-slate-400">{fa.details}</p>
+                    <span className="text-[10px] font-mono text-slate-500 block">{fa.timestamp}</span>
                   </div>
-                  <p className="text-xs text-slate-400">{fa.details}</p>
-                  <span className="text-[10px] font-mono text-slate-500 block">{fa.timestamp}</span>
-                </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => {
-                      tapFeedback();
-                      alert('Player account temporarily suspended from joining 48P tournaments.');
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition"
-                  >
-                    Ban Player
-                  </button>
-                  <button
-                    onClick={() => {
-                      tapFeedback();
-                      setFraudAlerts((prev) => prev.filter((a) => a.id !== fa.id));
-                    }}
-                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
-                  >
-                    Dismiss
-                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        tapFeedback();
+                        alert('Player account temporarily suspended from joining 48P tournaments.');
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition"
+                    >
+                      Ban Player
+                    </button>
+                    <button
+                      onClick={() => {
+                        tapFeedback();
+                        setFraudAlerts((prev) => prev.filter((a) => a.id !== fa.id));
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

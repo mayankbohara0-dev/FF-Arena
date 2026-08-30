@@ -5,22 +5,32 @@ import {
   ArrowUpRight,
   PlusCircle,
   Shield,
+  QrCode,
+  CheckCircle,
+  Clock,
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { PaymentModal } from '../modals/PaymentModal';
 import { KYCModal } from '../modals/KYCModal';
 import { tapFeedback, successFeedback, playError } from '../../../services/soundService';
 
+// Admin UPI details - players pay here for wallet deposits
+const ADMIN_UPI_ID = 'mayankbohara0@oksbi';
+const ADMIN_UPI_NAME = 'Mayank Bohara (FF Arena)';
+
 export const WalletTab: React.FC = () => {
   const { currentUser, walletTransactions, addCash, withdrawWinnings } = useApp();
   const [withdrawAmount, setWithdrawAmount] = useState('50');
-  const [upiId, setUpiId] = useState('aman@okaxis');
+  const [upiId, setUpiId] = useState(currentUser.upiId || '');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [activeModal, setActiveModal] = useState<'NONE' | 'WITHDRAW' | 'PAYMENT' | 'KYC'>('NONE');
+  const [activeModal, setActiveModal] = useState<'NONE' | 'DEPOSIT' | 'WITHDRAW' | 'PAYMENT' | 'KYC'>('NONE');
   const [kycApproved, setKycApproved] = useState(() => localStorage.getItem('ff_kyc') === 'approved');
+  const [depositAmount, setDepositAmount] = useState('50');
+  const [depositUtr, setDepositUtr] = useState('');
+  const [depositSubmitted, setDepositSubmitted] = useState(false);
 
-  const safeWalletBalance = currentUser.walletBalance ?? 125;
-  const safeWinningsBalance = currentUser.winningsBalance ?? 85;
+  const safeWalletBalance = currentUser.walletBalance ?? 0;
+  const safeWinningsBalance = currentUser.winningsBalance ?? 0;
 
   const handleWithdrawClick = () => {
     tapFeedback();
@@ -76,7 +86,7 @@ export const WalletTab: React.FC = () => {
           <div className="text-3xl font-display font-black text-white font-mono tracking-tight">
             ₹{safeWalletBalance.toFixed(2)}
           </div>
-          <p className="text-[10px] text-zinc-500 mt-0.5">Free Fire UID: {currentUser.gamerProfile?.gameUid || '982347101'}</p>
+          <p className="text-[10px] text-zinc-500 mt-0.5">Free Fire UID: {currentUser.gamerProfile?.gameUid || 'Not Linked'}</p>
         </div>
 
         {/* Split */}
@@ -96,7 +106,7 @@ export const WalletTab: React.FC = () => {
         {/* Action buttons */}
         <div className="grid grid-cols-2 gap-2.5 pt-1">
           <button
-            onClick={() => { tapFeedback(); setActiveModal('PAYMENT'); }}
+            onClick={() => { tapFeedback(); setActiveModal('DEPOSIT'); setDepositSubmitted(false); setDepositUtr(''); }}
             className="py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-zinc-800 transition active:scale-95"
           >
             <PlusCircle className="w-4 h-4 text-[#FFE600]" />
@@ -128,34 +138,132 @@ export const WalletTab: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          {walletTransactions.map((tx) => {
-            const isCredit = tx.amount > 0;
-            return (
-              <div
-                key={tx.id}
-                className="p-3 rounded-2xl bg-[#0E0E12] border border-zinc-800/80 flex items-center justify-between shadow-card-dark"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
-                    isCredit ? 'bg-[#FFE600]/10 border-[#FFE600]/30 text-[#FFE600]' : 'bg-zinc-800/60 border-zinc-700 text-zinc-400'
-                  }`}>
-                    {isCredit ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+          {walletTransactions.length === 0 ? (
+            <div className="p-6 rounded-2xl bg-[#0E0E12] border border-zinc-800/80 text-center space-y-1">
+              <p className="text-xs text-zinc-400 font-bold">No Transactions Yet</p>
+              <p className="text-[10px] text-zinc-600">Deposits, entry fees, and prize credits will be logged here.</p>
+            </div>
+          ) : (
+            walletTransactions.map((tx) => {
+              const isCredit = tx.amount > 0;
+              return (
+                <div
+                  key={tx.id}
+                  className="p-3 rounded-2xl bg-[#0E0E12] border border-zinc-800/80 flex items-center justify-between shadow-card-dark"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center border ${
+                      isCredit ? 'bg-[#FFE600]/10 border-[#FFE600]/30 text-[#FFE600]' : 'bg-zinc-800/60 border-zinc-700 text-zinc-400'
+                    }`}>
+                      {isCredit ? <ArrowDownLeft className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-xs text-white line-clamp-1">{tx.title}</h5>
+                      <span className="text-[9px] text-zinc-500 font-mono">{tx.date} • {tx.status}</span>
+                    </div>
                   </div>
-                  <div>
-                    <h5 className="font-bold text-xs text-white line-clamp-1">{tx.title}</h5>
-                    <span className="text-[9px] text-zinc-500 font-mono">{tx.date} • {tx.status}</span>
-                  </div>
+                  <span className={`font-mono font-black text-xs shrink-0 ${isCredit ? 'text-[#FFE600]' : 'text-white'}`}>
+                    {isCredit ? `+₹${tx.amount}` : `-₹${Math.abs(tx.amount)}`}
+                  </span>
                 </div>
-                <span className={`font-mono font-black text-xs shrink-0 ${isCredit ? 'text-[#FFE600]' : 'text-white'}`}>
-                  {isCredit ? `+₹${tx.amount}` : `-₹${Math.abs(tx.amount)}`}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 
-      {/* UPI Payment Modal */}
+      {/* UTR Deposit Modal */}
+      {activeModal === 'DEPOSIT' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#0E0E12] border border-zinc-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl animate-scale-up">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                <QrCode className="w-4 h-4 text-[#FFE600]" />
+                ADD CASH TO WALLET
+              </h4>
+              <button onClick={() => setActiveModal('NONE')} className="text-zinc-500 hover:text-white">✕</button>
+            </div>
+
+            {!depositSubmitted ? (
+              <>
+                {/* Step 1: Pay to Admin UPI */}
+                <div className="p-3 rounded-xl bg-[#FFE600]/5 border border-[#FFE600]/20 space-y-2">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Step 1 — Pay via UPI</p>
+                  <div className="p-2.5 rounded-lg bg-[#050507] border border-zinc-800">
+                    <span className="text-[9px] text-zinc-500 block">SEND MONEY TO</span>
+                    <span className="font-mono font-bold text-[#FFE600] text-sm">{ADMIN_UPI_ID}</span>
+                    <span className="text-[9px] text-zinc-400 block">{ADMIN_UPI_NAME}</span>
+                  </div>
+                  <a
+                    href={`upi://pay?pa=${ADMIN_UPI_ID}&pn=${encodeURIComponent(ADMIN_UPI_NAME)}&am=${depositAmount}&cu=INR&tn=FF+Arena+Wallet+Deposit`}
+                    className="block w-full py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs text-center shadow-glow-yellow-sm transition active:scale-95"
+                  >
+                    ⚡ Open GPay / PhonePe / Paytm
+                  </a>
+                </div>
+
+                {/* Step 2: Enter amount + UTR */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Step 2 — Enter Transaction Details</p>
+                  <div>
+                    <label className="text-[9px] font-bold text-zinc-500 block mb-1">AMOUNT PAID (₹)</label>
+                    <input
+                      type="number"
+                      min="15"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      className="w-full bg-[#050507] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#FFE600]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[9px] font-bold text-zinc-500 block mb-1">UPI TRANSACTION REF / UTR NUMBER</label>
+                    <input
+                      type="text"
+                      value={depositUtr}
+                      onChange={(e) => setDepositUtr(e.target.value)}
+                      placeholder="e.g. 412345678901"
+                      className="w-full bg-[#050507] border border-zinc-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#FFE600]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={!depositUtr.trim() || Number(depositAmount) < 15}
+                  onClick={() => {
+                    tapFeedback();
+                    // In production this would submit to admin for verification
+                    // For now add to passbook as pending
+                    addCash(0); // mark as pending, not credited yet
+                    setDepositSubmitted(true);
+                  }}
+                  className="w-full py-2.5 rounded-xl bg-[#FFE600] text-black font-black text-xs uppercase shadow-glow-yellow-sm transition active:scale-95 disabled:opacity-40"
+                >
+                  SUBMIT FOR VERIFICATION
+                </button>
+              </>
+            ) : (
+              <div className="text-center py-4 space-y-3">
+                <Clock className="w-10 h-10 text-amber-400 mx-auto" />
+                <h4 className="font-bold text-white">Pending Admin Verification</h4>
+                <p className="text-xs text-zinc-400">
+                  Your deposit of <strong className="text-[#FFE600] font-mono">₹{depositAmount}</strong> (UTR: {depositUtr}) has been submitted.
+                  Admin will verify and credit your wallet within <strong>15–30 minutes</strong>.
+                </p>
+                <p className="text-[10px] text-zinc-600">You will get a notification when your wallet is credited.</p>
+                <button
+                  onClick={() => { setActiveModal('NONE'); setDepositSubmitted(false); }}
+                  className="px-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-bold text-xs"
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* UPI Payment Modal (legacy fallback) */}
       {activeModal === 'PAYMENT' && (
         <PaymentModal
           amount={50}

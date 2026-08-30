@@ -95,9 +95,11 @@ const MainAppContent: React.FC = () => {
     return (
       <div className="w-full h-full bg-[#050507] flex items-center justify-center">
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-[#FFE600] flex items-center justify-center mx-auto shadow-glow-yellow">
-            <span className="font-display font-black text-black text-2xl">FF</span>
-          </div>
+          <img
+            src="/logo.png"
+            alt="FF Arena"
+            className="w-20 h-20 object-contain mx-auto drop-shadow-[0_0_20px_rgba(255,230,0,0.5)] animate-pulse"
+          />
           <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase">FF ARENA</p>
           <div className="w-8 h-0.5 bg-[#FFE600] rounded-full mx-auto animate-pulse" />
         </div>

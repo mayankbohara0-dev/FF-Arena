@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import {
   Download,
   Shield,
@@ -68,9 +68,11 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FFE600] flex items-center justify-center shadow-glow-yellow-sm">
-              <span className="font-display font-black text-black text-xl tracking-tighter">FF</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="FF Arena"
+              className="w-11 h-11 object-contain drop-shadow-[0_0_12px_rgba(255,230,0,0.35)]"
+            />
             <div>
               <span className="font-display font-black text-lg text-white tracking-wider block leading-none">
                 FF ARENA
@@ -155,7 +157,7 @@ export const LandingPage: React.FC = () => {
                 {/* Header in phone */}
                 <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#FFE600] flex items-center justify-center text-black font-black text-xs">FF</div>
+                    <img src="/logo.png" alt="FF" className="w-8 h-8 object-contain" />
                     <div>
                       <h4 className="text-xs font-bold text-white leading-none">FF ARENA</h4>
                       <span className="text-[8px] text-[#FFE600] font-mono">LIVE 48P MATCH</span>
@@ -419,9 +421,7 @@ export const LandingPage: React.FC = () => {
       <footer className="py-10 px-4 sm:px-6 border-t border-zinc-800/80 bg-[#040406] text-xs text-zinc-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <div className="flex items-center gap-2 justify-center sm:justify-start">
-            <div className="w-6 h-6 rounded-lg bg-[#FFE600] flex items-center justify-center font-black text-black text-[10px]">
-              FF
-            </div>
+            <img src="/logo.png" alt="FF" className="w-7 h-7 object-contain" />
             <span className="font-display font-black text-white">FF ARENA</span>
             <span className="text-[10px] text-zinc-600">© 2026. All rights reserved.</span>
           </div>

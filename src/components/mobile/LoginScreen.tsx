@@ -236,9 +236,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#FFE600]/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="mb-5 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#FFE600] flex items-center justify-center mx-auto mb-3 shadow-glow-yellow">
-          <span className="font-display font-black text-black text-2xl">FF</span>
-        </div>
+        <img
+          src="/logo.png"
+          alt="FF Arena Logo"
+          className="w-20 h-20 object-contain mx-auto mb-2 drop-shadow-[0_0_16px_rgba(255,230,0,0.4)]"
+        />
         <h1 className="font-display font-black text-2xl text-white">FF ARENA</h1>
         <div className="flex items-center justify-center gap-1 mt-1 text-[11px] text-[#FFE600] font-bold">
           <Sparkles className="w-3 h-3" />

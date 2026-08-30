@@ -224,9 +224,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
         {/* Drawer Footer */}
         <div className="p-4 border-t border-slate-800 bg-slate-950 flex items-center justify-between">
-          <div className="text-[11px] text-slate-500 font-mono">
+          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+            <img src="/logo.png" alt="FF" className="w-5 h-5 object-contain" />
             <span>FF Arena</span>
-            <span className="ml-1 text-[#FFE600] font-bold">v1.0.0</span>
+            <span className="text-[#FFE600] font-bold">v1.0.0</span>
           </div>
           <button
             onClick={() => {

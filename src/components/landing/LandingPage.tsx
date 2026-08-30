@@ -130,7 +130,7 @@ export const LandingPage: React.FC = () => {
                 <Download className="w-6 h-6" />
                 <div className="text-left leading-tight">
                   <span className="block text-xs uppercase tracking-wider font-bold text-zinc-800">DOWNLOAD FOR ANDROID</span>
-                  <span className="block text-sm font-black">FF-Arena-v1.0.apk (10 MB)</span>
+                  <span className="block text-sm font-black">FF-Arena-v1.0.apk (~35 MB)</span>
                 </div>
               </button>
             </div>
@@ -348,7 +348,7 @@ export const LandingPage: React.FC = () => {
               {
                 step: "01",
                 title: "Download APK",
-                desc: "Click the download button to save `ff-arena-v1.0.apk` (10 MB) to your phone.",
+                desc: "Click the download button to save `ff-arena-v1.0.apk` (~35 MB) to your phone.",
               },
               {
                 step: "02",

@@ -192,7 +192,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   <Download className="w-4 h-4 text-[#FFE600]" />
                   <div>
                     <span className="font-bold text-white text-xs block">Download Android APK</span>
-                    <span className="text-[9px] text-[#FFE600] font-mono">v1.0.0 • 100% Virus-Free (10 MB)</span>
+                    <span className="text-[9px] text-[#FFE600] font-mono">v1.0.0 • 100% Virus-Free (~35 MB)</span>
                   </div>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-[#FFE600]" />

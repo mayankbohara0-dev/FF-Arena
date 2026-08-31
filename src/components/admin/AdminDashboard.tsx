@@ -63,6 +63,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab, onTab
   const [tourneySlots, setTourneySlots] = useState<number>(48);
   const [tourneyEntryFee, setTourneyEntryFee] = useState<number>(15);
   const [tourneyKillReward, setTourneyKillReward] = useState<number>(10);
+  const [tourneyRoomId, setTourneyRoomId] = useState<string>('');
+  const [tourneyRoomPass, setTourneyRoomPass] = useState<string>('');
   const [isCollegeOnly, setIsCollegeOnly] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -91,6 +93,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab, onTab
       perKillReward: tourneyKillReward,
       rewardDescription: `🏆 ₹${tourneyKillReward}/Kill + ₹20 Booyah Bonus`,
       isCollegeOnly,
+      roomId: tourneyRoomId.trim() || undefined,
+      roomPassword: tourneyRoomPass.trim() || undefined,
       scoringSystem: {
         placementPoints: { 1: 12, 2: 9, 3: 8, 4: 7, 5: 6, 6: 5, 7: 4, 8: 3, 9: 2, 10: 1 },
         killPoint: 1,
@@ -107,6 +111,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab, onTab
     setTourneySlots(48);
     setTourneyEntryFee(15);
     setTourneyKillReward(10);
+    setTourneyRoomId('');
+    setTourneyRoomPass('');
     setIsCollegeOnly(false);
     successFeedback();
     onTabChange('TOURNAMENTS');
@@ -575,6 +581,39 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ activeTab, onTab
                       onChange={(e) => setTourneyKillReward(Number(e.target.value))}
                       className="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-purple-500"
                     />
+                  </div>
+                </div>
+
+                {/* Custom Room ID & Password (Revealed to players after payment) */}
+                <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-500/40 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] text-purple-300 font-bold flex items-center gap-1.5">
+                      <Key className="w-3.5 h-3.5 text-[#FFE600]" />
+                      CUSTOM ROOM CREDENTIALS (REVEALED AFTER PAYMENT)
+                    </label>
+                  </div>
+                  <p className="text-[9px] text-slate-400">
+                    ⚡ Players will automatically receive these credentials immediately after paying their entry fee.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Custom Room ID (e.g. 8391047)"
+                        value={tourneyRoomId}
+                        onChange={(e) => setTourneyRoomId(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-purple-500 placeholder:text-slate-600"
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Room Password (e.g. arenaff2026)"
+                        value={tourneyRoomPass}
+                        onChange={(e) => setTourneyRoomPass(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-orange-300 font-mono font-bold focus:outline-none focus:border-purple-500 placeholder:text-slate-600"
+                      />
+                    </div>
                   </div>
                 </div>
 

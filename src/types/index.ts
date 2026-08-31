@@ -179,6 +179,9 @@ export interface Tournament {
   sponsorLogoUrl?: string;
   isCollegeOnly?: boolean;
   minRatingRequirement?: number;
+  roomId?: string;
+  roomPassword?: string;
+  isRoomReleased?: boolean;
   matches?: Match[];
   matchMode?: 'SOLO' | 'DUO' | 'SQUAD';
 }

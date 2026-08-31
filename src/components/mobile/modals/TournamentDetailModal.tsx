@@ -63,9 +63,7 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
     if (!res.success) {
       alert(res.message);
     } else {
-      if (activeMatch?.isRoomReleased) {
-        setActiveTab('ROOM');
-      }
+      setActiveTab('ROOM');
     }
   };
 
@@ -217,40 +215,53 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
                   CUSTOM ROOM DETAILS
                 </span>
                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                  activeMatch?.isRoomReleased
+                  (isRegistered && (tournament.roomId || activeMatch?.roomId)) || activeMatch?.isRoomReleased
                     ? 'bg-[#FFE600]/20 text-[#FFE600] border border-[#FFE600]/30'
                     : 'bg-zinc-800 text-zinc-400'
                 }`}>
-                  {activeMatch?.isRoomReleased ? '● ROOM UNLOCKED' : '🔒 WAITING FOR 48 PLAYERS'}
+                  {(isRegistered && (tournament.roomId || activeMatch?.roomId)) || activeMatch?.isRoomReleased
+                    ? '● ROOM UNLOCKED'
+                    : isRegistered ? '⏳ ROOM PENDING' : '🔒 REGISTER TO UNLOCK'}
                 </span>
               </div>
 
-              {activeMatch?.isRoomReleased ? (
+              {(isRegistered && (tournament.roomId || activeMatch?.roomId)) || activeMatch?.isRoomReleased ? (
                 <div className="space-y-2 pt-1">
+                  {isRegistered && (
+                    <div className="p-2.5 rounded-xl bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold flex items-center justify-between">
+                      <span>✓ Slot #{userRegistration?.slotNumber || 1} Confirmed & Paid</span>
+                      <span className="text-[10px] text-green-300 font-mono">₹{entryFee} Paid</span>
+                    </div>
+                  )}
+
                   <div className="p-2.5 rounded-lg bg-[#0E0E12] border border-zinc-800 flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-[8px] text-zinc-500 block uppercase font-bold">Room ID</span>
-                      <span className="font-mono font-bold text-white tracking-wider">{activeMatch.roomId}</span>
+                      <span className="text-[8px] text-zinc-500 block uppercase font-bold">Custom Room ID</span>
+                      <span className="font-mono font-bold text-white tracking-wider text-sm">{tournament.roomId || activeMatch?.roomId || '8391047'}</span>
                     </div>
                     <button
-                      onClick={() => handleCopy(activeMatch.roomId || '8391047', 'room_id')}
-                      className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 text-[#FFE600] font-black text-[9px] border border-[#FFE600]/30"
+                      onClick={() => handleCopy(tournament.roomId || activeMatch?.roomId || '8391047', 'room_id')}
+                      className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 hover:bg-[#FFE600]/20 text-[#FFE600] font-black text-[9px] border border-[#FFE600]/30 active:scale-95 transition"
                     >
-                      {copiedField === 'room_id' ? 'COPIED' : 'COPY ID'}
+                      {copiedField === 'room_id' ? '✓ COPIED' : 'COPY ID'}
                     </button>
                   </div>
 
                   <div className="p-2.5 rounded-lg bg-[#0E0E12] border border-zinc-800 flex items-center justify-between text-xs">
                     <div>
-                      <span className="text-[8px] text-zinc-500 block uppercase font-bold">Password</span>
-                      <span className="font-mono font-bold text-[#FFE600] tracking-wider">{activeMatch.roomPassword}</span>
+                      <span className="text-[8px] text-zinc-500 block uppercase font-bold">Room Password</span>
+                      <span className="font-mono font-bold text-[#FFE600] tracking-wider text-sm">{tournament.roomPassword || activeMatch?.roomPassword || 'arenaff2026'}</span>
                     </div>
                     <button
-                      onClick={() => handleCopy(activeMatch.roomPassword || 'arenaff2026', 'password')}
-                      className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 text-[#FFE600] font-black text-[9px] border border-[#FFE600]/30"
+                      onClick={() => handleCopy(tournament.roomPassword || activeMatch?.roomPassword || 'arenaff2026', 'password')}
+                      className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 hover:bg-[#FFE600]/20 text-[#FFE600] font-black text-[9px] border border-[#FFE600]/30 active:scale-95 transition"
                     >
-                      {copiedField === 'password' ? 'COPIED' : 'COPY PASS'}
+                      {copiedField === 'password' ? '✓ COPIED' : 'COPY PASS'}
                     </button>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[10px] text-purple-200">
+                    💡 <strong>How to enter:</strong> Open Free Fire MAX → Custom Room → Search Room ID → Enter Password → Join your slot!
                   </div>
 
                   {onOpenSubmitResult && activeMatch && (
@@ -263,10 +274,25 @@ export const TournamentDetailModal: React.FC<TournamentDetailModalProps> = ({
                     </button>
                   )}
                 </div>
-              ) : (
-                <div className="text-center py-4 text-xs text-zinc-400">
+              ) : isRegistered ? (
+                <div className="text-center py-5 text-xs text-zinc-400 space-y-1">
                   <Lock className="w-6 h-6 text-[#FFE600] mx-auto mb-1 opacity-80" />
-                  Credentials will unlock automatically when 48 players join.
+                  <p className="font-bold text-white">Your slot #{userRegistration?.slotNumber || 1} is confirmed!</p>
+                  <p className="text-[10px] text-zinc-400">Admin will release the Custom Room ID & Password right here before match start.</p>
+                </div>
+              ) : (
+                <div className="text-center py-5 text-xs text-zinc-400 space-y-2">
+                  <Lock className="w-6 h-6 text-[#FFE600] mx-auto mb-1 opacity-80" />
+                  <p className="font-bold text-white">Custom Room ID & Password are locked</p>
+                  <p className="text-[10px] text-zinc-400 max-w-xs mx-auto">
+                    Pay the ₹{entryFee} entry fee to book your slot and reveal the Room ID & Password immediately.
+                  </p>
+                  <button
+                    onClick={handleStartRegistration}
+                    className="px-4 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs inline-flex items-center gap-1 shadow-glow-yellow-sm active:scale-95 transition"
+                  >
+                    <span>⚡ Pay ₹{entryFee} & Unlock Room Details</span>
+                  </button>
                 </div>
               )}
             </div>

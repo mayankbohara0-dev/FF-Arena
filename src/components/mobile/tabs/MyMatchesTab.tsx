@@ -88,7 +88,9 @@ export const MyMatchesTab: React.FC<MyMatchesTabProps> = ({
           {myTournaments.map((t) => {
             const reg = userRegistrations.find((r) => r.tournamentId === t.id);
             const tourneyMatch = matches.find((m) => m.tournamentId === t.id) || matches[0];
-            const isRoomUnlocked = t.currentParticipants >= (t.maxParticipants || 48) || tourneyMatch?.isRoomReleased;
+            const roomId = t.roomId || tourneyMatch?.roomId;
+            const roomPassword = t.roomPassword || tourneyMatch?.roomPassword;
+            const isRoomUnlocked = Boolean(roomId || tourneyMatch?.isRoomReleased || t.currentParticipants >= (t.maxParticipants || 48));
 
             return (
               <div
@@ -132,45 +134,48 @@ export const MyMatchesTab: React.FC<MyMatchesTabProps> = ({
                       {isRoomUnlocked ? '● ROOM UNLOCKED' : `WAITING FOR 48 PLAYERS (${t.currentParticipants}/48)`}
                     </span>
                   </div>
-
-                  {isRoomUnlocked ? (
+                                {isRoomUnlocked ? (
                     <div className="space-y-1.5 pt-1">
                       <div className="p-2 rounded-lg bg-[#0E0E12] border border-zinc-800 flex items-center justify-between text-xs">
                         <div>
-                          <span className="text-[8px] text-zinc-500 block uppercase font-bold">Room ID</span>
-                          <span className="font-mono font-bold text-white tracking-wider">
-                            {tourneyMatch?.roomId || '8391047'}
+                          <span className="text-[8px] text-zinc-500 block uppercase font-bold">Custom Room ID</span>
+                          <span className="font-mono font-bold text-white tracking-wider text-sm">
+                            {roomId || '8391047'}
                           </span>
                         </div>
                         <button
-                          onClick={() => handleCopy(tourneyMatch?.roomId || '8391047', `room-${t.id}`)}
-                          className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 hover:bg-[#FFE600]/20 text-[#FFE600] font-black text-[9px] flex items-center gap-1 border border-[#FFE600]/30 transition"
+                          onClick={() => handleCopy(roomId || '8391047', `room-${t.id}`)}
+                          className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 hover:bg-[#FFE600]/20 text-[#FFE600] font-black text-[9px] flex items-center gap-1 border border-[#FFE600]/30 active:scale-95 transition"
                         >
                           {copiedField === `room-${t.id}` ? <Check className="w-3 h-3 text-[#FFE600]" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedField === `room-${t.id}` ? 'COPIED' : 'COPY ID'}</span>
+                          <span>{copiedField === `room-${t.id}` ? '✓ COPIED' : 'COPY ID'}</span>
                         </button>
                       </div>
 
                       <div className="p-2 rounded-lg bg-[#0E0E12] border border-zinc-800 flex items-center justify-between text-xs">
                         <div>
-                          <span className="text-[8px] text-zinc-500 block uppercase font-bold">Password</span>
-                          <span className="font-mono font-bold text-[#FFE600] tracking-wider">
-                            {tourneyMatch?.roomPassword || 'arenaff2026'}
+                          <span className="text-[8px] text-zinc-500 block uppercase font-bold">Room Password</span>
+                          <span className="font-mono font-bold text-[#FFE600] tracking-wider text-sm">
+                            {roomPassword || 'arenaff2026'}
                           </span>
                         </div>
                         <button
-                          onClick={() => handleCopy(tourneyMatch?.roomPassword || 'arenaff2026', `pass-${t.id}`)}
-                          className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 hover:bg-[#FFE600]/20 text-[#FFE600] font-black text-[9px] flex items-center gap-1 border border-[#FFE600]/30 transition"
+                          onClick={() => handleCopy(roomPassword || 'arenaff2026', `pass-${t.id}`)}
+                          className="px-2.5 py-1 rounded-md bg-[#FFE600]/10 hover:bg-[#FFE600]/20 text-[#FFE600] font-black text-[9px] flex items-center gap-1 border border-[#FFE600]/30 active:scale-95 transition"
                         >
                           {copiedField === `pass-${t.id}` ? <Check className="w-3 h-3 text-[#FFE600]" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedField === `pass-${t.id}` ? 'COPIED' : 'COPY PASS'}</span>
+                          <span>{copiedField === `pass-${t.id}` ? '✓ COPIED' : 'COPY PASS'}</span>
                         </button>
+                      </div>
+
+                      <div className="p-2 rounded-lg bg-purple-950/30 border border-purple-500/20 text-[9px] text-purple-200">
+                        ⚡ Enter Room ID & Password in Free Fire MAX → Custom Room to join slot #{reg?.slotNumber || 1}!
                       </div>
                     </div>
                   ) : (
-                    <div className="p-2 rounded-lg bg-[#0E0E12] border border-zinc-800 text-[10px] text-zinc-400">
-                      <Lock className="w-3.5 h-3.5 text-[#FFE600] inline mr-1" />
-                      Room ID & Password will automatically appear here once all 48 players join.
+                    <div className="text-center py-3 text-xs text-zinc-400 space-y-1">
+                      <Lock className="w-5 h-5 text-[#FFE600] mx-auto opacity-70" />
+                      <p className="text-[10px] text-zinc-400">Admin will release Custom Room ID & Password before match start.</p>
                     </div>
                   )}
                 </div>

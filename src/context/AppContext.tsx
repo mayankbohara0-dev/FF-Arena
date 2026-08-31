@@ -404,8 +404,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
-    // If 48/48 filled, release custom room credentials
-    if (isNowFull) {
+    // If tournament has room ID already set or 48/48 full, reveal credentials immediately
+    const hasCustomRoom = Boolean(tournament.roomId);
+    const roomId = tournament.roomId || '8391047';
+    const roomPassword = tournament.roomPassword || 'arenaff2026';
+
+    if (hasCustomRoom) {
+      setMatches((prev) =>
+        prev.map((m) =>
+          m.tournamentId === tournamentId
+            ? { ...m, roomId, roomPassword, isRoomReleased: true, status: 'ROOM_READY' }
+            : m
+        )
+      );
+      addNotification(
+        '🔑 Custom Room Credentials Unlocked!',
+        `Your slot #${assignedSlot} in ${tournament.name} is booked! Room ID: ${roomId} | Password: ${roomPassword}. Open Free Fire and enter match!`,
+        'ROOM_DETAILS'
+      );
+    } else if (isNowFull) {
       setMatches((prev) =>
         prev.map((m) =>
           m.tournamentId === tournamentId
@@ -416,13 +433,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       addNotification(
         '🔥 48/48 Filled: Custom Room Unlocked!',
-        `All 48 slots filled for ${tournament.name}! Room ID: 8391047 | Pass: arenaff2026. Join match now!`,
+        `All 48 slots filled for ${tournament.name}! Room ID: ${roomId} | Pass: ${roomPassword}. Join match now!`,
         'ROOM_DETAILS'
       );
     } else {
       addNotification(
         'Slot Booked! 🎮',
-        `₹${entryFee} entry fee paid! Slot #${assignedSlot} assigned. (${newParticipants}/48 players filled).`,
+        `₹${entryFee} entry fee paid! Slot #${assignedSlot} assigned. (${newParticipants}/48 players filled). Room ID & Pass will appear here when published.`,
         'ROOM_DETAILS'
       );
     }
@@ -430,7 +447,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     triggerConfetti();
     return {
       success: true,
-      message: `Slot #${assignedSlot}/48 Confirmed for ₹${entryFee}! ${isNowFull ? 'Room details unlocked!' : ''}`,
+      message: hasCustomRoom
+        ? `Slot #${assignedSlot} Confirmed! Room ID: ${roomId} | Password: ${roomPassword}`
+        : `Slot #${assignedSlot}/48 Confirmed for ₹${entryFee}! ${isNowFull ? 'Room details unlocked!' : ''}`,
       slotNumber: assignedSlot,
     };
   };
@@ -474,8 +493,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       sponsorName: newTourney.sponsorName,
       minRatingRequirement: newTourney.minRatingRequirement || 0,
       isCollegeOnly: newTourney.isCollegeOnly || false,
+      roomId: newTourney.roomId || undefined,
+      roomPassword: newTourney.roomPassword || undefined,
+      isRoomReleased: Boolean(newTourney.roomId),
     };
 
+    const createdMatch: Match = {
+      id: `match-${created.id}`,
+      tournamentId: created.id,
+      matchNumber: 1,
+      title: `${created.name} - Match 1`,
+      map: created.map,
+      roomId: newTourney.roomId || undefined,
+      roomPassword: newTourney.roomPassword || undefined,
+      roomReleaseTime: created.startTime,
+      startTime: created.startTime,
+      status: newTourney.roomId ? 'ROOM_READY' : 'UPCOMING',
+      isRoomReleased: Boolean(newTourney.roomId),
+    };
+
+    created.matches = [createdMatch];
+    setMatches((prev) => [createdMatch, ...prev]);
     setTournaments((prev) => [created, ...prev]);
 
     if (isSupabaseConfigured()) {
@@ -574,9 +612,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     roomReleaseTime: string,
     isRoomReleased: boolean
   ) => {
+    const targetTourneyId = matchId.startsWith('match-') ? matchId.replace('match-', '') : matchId;
+    setTournaments((prev) =>
+      prev.map((t) =>
+        t.id === targetTourneyId || t.id === matchId
+          ? { ...t, roomId, roomPassword, isRoomReleased }
+          : t
+      )
+    );
     setMatches((prev) =>
       prev.map((m) =>
-        m.id === matchId
+        m.id === matchId || m.tournamentId === targetTourneyId
           ? {
               ...m,
               roomId,

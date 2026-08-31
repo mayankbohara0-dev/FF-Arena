@@ -16,15 +16,30 @@ import {
   Award,
   Sparkles,
   ArrowRight,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  RefreshCw,
+  Lock,
+  X,
 } from "lucide-react";
 import { tapFeedback } from "../../services/soundService";
 
+type ModalType = "NONE" | "PRIVACY" | "TERMS" | "REFUND";
+
 export const LandingPage: React.FC = () => {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [activeModal, setActiveModal] = useState<ModalType>("NONE");
 
   const toggleFaq = (index: number) => {
     tapFeedback();
     setActiveFaq(activeFaq === index ? null : index);
+  };
+
+  const openModal = (type: ModalType) => {
+    tapFeedback();
+    setActiveModal(type);
   };
 
   const handleDownloadApk = () => {
@@ -63,6 +78,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050507] text-slate-100 selection:bg-[#FFE600] selection:text-black font-sans">
+
       {/* ── TOP NAVIGATION ── */}
       <header className="sticky top-0 z-50 bg-[#08080C]/90 backdrop-blur-xl border-b border-zinc-800/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -83,16 +99,22 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Nav Download Action */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleDownloadApk}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs shadow-glow-yellow-sm transition active:scale-95 cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download APK</span>
-            </button>
+          {/* Nav Links */}
+          <div className="hidden sm:flex items-center gap-5 text-[11px] font-bold text-zinc-400">
+            <button onClick={() => openModal('PRIVACY')} style={{minHeight: 'unset', minWidth: 'unset'}} className="h-auto py-1 hover:text-white transition">Privacy</button>
+            <button onClick={() => openModal('TERMS')} style={{minHeight: 'unset', minWidth: 'unset'}} className="h-auto py-1 hover:text-white transition">Terms</button>
+            <button onClick={() => openModal('REFUND')} style={{minHeight: 'unset', minWidth: 'unset'}} className="h-auto py-1 hover:text-white transition">Refund Policy</button>
+            <a href="#contact" style={{minHeight: 'unset', minWidth: 'unset'}} className="h-auto py-1 hover:text-white transition">Contact</a>
           </div>
+
+          {/* Nav Download Action */}
+          <button
+            onClick={handleDownloadApk}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FFE600] hover:bg-[#FFF066] text-black font-black text-xs shadow-glow-yellow-sm transition active:scale-95 cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download APK</span>
+          </button>
         </div>
       </header>
 
@@ -130,7 +152,7 @@ export const LandingPage: React.FC = () => {
                 <Download className="w-6 h-6" />
                 <div className="text-left leading-tight">
                   <span className="block text-xs uppercase tracking-wider font-bold text-zinc-800">DOWNLOAD FOR ANDROID</span>
-                  <span className="block text-sm font-black">FF-Arena-v1.0.apk (~35 MB)</span>
+                  <span className="block text-sm font-black">FF-Arena-v1.0.apk (~60 MB)</span>
                 </div>
               </button>
             </div>
@@ -348,7 +370,7 @@ export const LandingPage: React.FC = () => {
               {
                 step: "01",
                 title: "Download APK",
-                desc: "Click the download button to save `ff-arena-v1.0.apk` (~35 MB) to your phone.",
+                desc: "Click the download button to save `ff-arena-v1.0.apk` (~60 MB) to your phone.",
               },
               {
                 step: "02",
@@ -417,27 +439,279 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="py-10 px-4 sm:px-6 border-t border-zinc-800/80 bg-[#040406] text-xs text-zinc-500">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-2 justify-center sm:justify-start">
-            <img src="/logo.png" alt="FF" className="w-7 h-7 object-contain" />
-            <span className="font-display font-black text-white">FF ARENA</span>
-            <span className="text-[10px] text-zinc-600">© 2026. All rights reserved.</span>
+      {/* ── CONTACT SECTION ── */}
+      <section id="contact" className="py-20 px-4 sm:px-6 bg-[#08080D] border-t border-zinc-800/80">
+        <div className="max-w-5xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <span className="text-xs font-black text-[#FFE600] uppercase tracking-widest">GET IN TOUCH</span>
+            <h2 className="font-display font-black text-2xl sm:text-4xl text-white">Contact & Support</h2>
+            <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              Have a query, dispute, or payment issue? Reach out to us — we typically respond within 2–4 hours.
+            </p>
           </div>
 
-          <div className="flex items-center gap-5 justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <a
-              href="https://github.com/mayankbohara0-dev/FF-Arena"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-white transition flex items-center gap-1"
+              href="mailto:support@ffarena.in"
+              className="p-6 rounded-3xl bg-[#0B0B10] border border-zinc-800 hover:border-[#FFE600]/40 transition group space-y-3"
             >
-              GitHub Repo <ExternalLink className="w-3 h-3" />
+              <div className="w-11 h-11 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/20 flex items-center justify-center text-[#FFE600] group-hover:bg-[#FFE600]/20 transition">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Email Support</h3>
+                <p className="text-xs text-[#FFE600] font-mono mt-0.5">support@ffarena.in</p>
+                <p className="text-[10px] text-zinc-500 mt-1">Response within 2–4 hours</p>
+              </div>
             </a>
+
+            <a
+              href="mailto:admin@ffarena.in"
+              className="p-6 rounded-3xl bg-[#0B0B10] border border-zinc-800 hover:border-[#FFE600]/40 transition group space-y-3"
+            >
+              <div className="w-11 h-11 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/20 flex items-center justify-center text-[#FFE600] group-hover:bg-[#FFE600]/20 transition">
+                <Trophy className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Tournament Admin</h3>
+                <p className="text-xs text-[#FFE600] font-mono mt-0.5">admin@ffarena.in</p>
+                <p className="text-[10px] text-zinc-500 mt-1">Match disputes & prize issues</p>
+              </div>
+            </a>
+
+            <div className="p-6 rounded-3xl bg-[#0B0B10] border border-zinc-800 space-y-3">
+              <div className="w-11 h-11 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/20 flex items-center justify-center text-[#FFE600]">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-white">Business Address</h3>
+                <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
+                  FF Arena Esports<br />
+                  India 🇮🇳<br />
+                  <span className="text-[10px] text-zinc-600">GST & PAN on file with Razorpay</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer className="py-10 px-4 sm:px-6 border-t border-zinc-800/80 bg-[#040406] text-xs text-zinc-500">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+            <div className="flex items-center gap-2 justify-center sm:justify-start">
+              <img src="/logo.png" alt="FF" className="w-7 h-7 object-contain" />
+              <span className="font-display font-black text-white">FF ARENA</span>
+              <span className="text-[10px] text-zinc-600">© 2026. All rights reserved.</span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-5 justify-center">
+              <button onClick={() => openModal('PRIVACY')} className="hover:text-white transition flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Privacy Policy
+              </button>
+              <button onClick={() => openModal('TERMS')} className="hover:text-white transition flex items-center gap-1">
+                <FileText className="w-3 h-3" /> Terms & Conditions
+              </button>
+              <button onClick={() => openModal('REFUND')} className="hover:text-white transition flex items-center gap-1">
+                <RefreshCw className="w-3 h-3" /> Refund Policy
+              </button>
+              <a href="#contact" className="hover:text-white transition flex items-center gap-1">
+                <Mail className="w-3 h-3" /> Contact
+              </a>
+              <a
+                href="https://github.com/mayankbohara0-dev/FF-Arena"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-white transition flex items-center gap-1"
+              >
+                GitHub <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+
+          <div className="border-t border-zinc-800/60 pt-5 text-[10px] text-zinc-600 text-center space-y-1">
+            <p>FF Arena is an independent esports platform and is not affiliated with Garena or Free Fire MAX. All trademarks belong to their respective owners.</p>
+            <p>Payments are processed securely via Razorpay. Entry fees are non-refundable once a tournament slot is confirmed. Prize winnings are subject to result verification.</p>
           </div>
         </div>
       </footer>
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* MODAL: PRIVACY POLICY                           */}
+      {/* ════════════════════════════════════════════════ */}
+      {activeModal === 'PRIVACY' && (
+        <PolicyModal title="Privacy Policy" icon={<Lock className="w-5 h-5 text-[#FFE600]" />} onClose={() => setActiveModal('NONE')}>
+          <p className="text-zinc-400 text-xs">Last updated: August 2026</p>
+          <Section title="1. Information We Collect">
+            <li>Email address and display name (for account creation)</li>
+            <li>Free Fire UID and in-game name (for match registration)</li>
+            <li>UPI ID (for prize payout transfers only)</li>
+            <li>Match screenshots uploaded for result verification</li>
+            <li>Device information and app usage analytics</li>
+          </Section>
+          <Section title="2. How We Use Your Information">
+            <li>To create and manage your FF Arena account</li>
+            <li>To process tournament registrations and payments</li>
+            <li>To verify match results using AI OCR</li>
+            <li>To transfer prize winnings to your UPI ID</li>
+            <li>To send match notifications and updates</li>
+          </Section>
+          <Section title="3. Data Sharing">
+            <p className="text-zinc-400 text-xs leading-relaxed">We do not sell or share your personal data with third parties, except with payment processors (Razorpay) for processing transactions, as required by law, or to prevent fraud.</p>
+          </Section>
+          <Section title="4. Data Security">
+            <p className="text-zinc-400 text-xs leading-relaxed">Your data is stored securely using Supabase (PostgreSQL with Row-Level Security). UPI IDs are only used for prize transfers and are never stored in plain-text logs.</p>
+          </Section>
+          <Section title="5. Your Rights">
+            <li>Request deletion of your account and associated data</li>
+            <li>Update your personal information from the Profile tab</li>
+            <li>Contact us at support@ffarena.in for any data requests</li>
+          </Section>
+          <Section title="6. Contact">
+            <p className="text-zinc-400 text-xs">For privacy concerns: <span className="text-[#FFE600]">support@ffarena.in</span></p>
+          </Section>
+        </PolicyModal>
+      )}
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* MODAL: TERMS & CONDITIONS                       */}
+      {/* ════════════════════════════════════════════════ */}
+      {activeModal === 'TERMS' && (
+        <PolicyModal title="Terms & Conditions" icon={<FileText className="w-5 h-5 text-[#FFE600]" />} onClose={() => setActiveModal('NONE')}>
+          <p className="text-zinc-400 text-xs">Last updated: August 2026</p>
+          <Section title="1. Eligibility">
+            <li>You must be 18 years or older to use FF Arena.</li>
+            <li>You must own a valid Free Fire MAX account on a mobile device.</li>
+            <li>PC emulator players are strictly prohibited and will be permanently banned.</li>
+          </Section>
+          <Section title="2. Tournament Entry">
+            <li>Entry fees are collected securely via UPI / Razorpay payment gateway.</li>
+            <li>Each entry fee pays for one tournament slot (#1 to #48).</li>
+            <li>Slots are allocated on a first-come, first-served basis.</li>
+            <li>Maximum 48 players per tournament — no additional entries accepted once full.</li>
+          </Section>
+          <Section title="3. Match Rules">
+            <li>Players must join the custom room using the Room ID and Password provided in the app.</li>
+            <li>Match results must be submitted via screenshot within 30 minutes of match end.</li>
+            <li>Screenshots are verified by AI OCR; fraudulent submissions will result in permanent ban.</li>
+            <li>FF Arena administrators have the final authority on all result disputes.</li>
+          </Section>
+          <Section title="4. Prize Winnings">
+            <li>Prizes are calculated as: (Kills × ₹10) + Placement Bonus (₹20 for 1st, ₹15 for 2nd/3rd).</li>
+            <li>Winnings are credited to your FF Arena wallet after admin verification.</li>
+            <li>Withdrawals are transferred to your registered UPI ID within 24 hours of request.</li>
+          </Section>
+          <Section title="5. Prohibited Conduct">
+            <li>Using emulators, hacks, aimbots, or any cheat software.</li>
+            <li>Submitting fake or edited screenshots.</li>
+            <li>Account sharing or playing on behalf of another player.</li>
+            <li>Abusing or harassing FF Arena staff or other players.</li>
+          </Section>
+          <Section title="6. Account Termination">
+            <p className="text-zinc-400 text-xs leading-relaxed">FF Arena reserves the right to suspend or permanently ban any account found in violation of these terms without prior notice. Entry fees are non-refundable upon ban.</p>
+          </Section>
+          <Section title="7. Governing Law">
+            <p className="text-zinc-400 text-xs leading-relaxed">These terms are governed by the laws of India. Any disputes will be subject to jurisdiction in India.</p>
+          </Section>
+        </PolicyModal>
+      )}
+
+      {/* ════════════════════════════════════════════════ */}
+      {/* MODAL: REFUND POLICY                            */}
+      {/* ════════════════════════════════════════════════ */}
+      {activeModal === 'REFUND' && (
+        <PolicyModal title="Refund & Cancellation Policy" icon={<RefreshCw className="w-5 h-5 text-[#FFE600]" />} onClose={() => setActiveModal('NONE')}>
+          <p className="text-zinc-400 text-xs">Last updated: August 2026 — As required by RBI Payment Gateway Guidelines</p>
+          <Section title="1. Entry Fee Refunds">
+            <p className="text-zinc-400 text-xs leading-relaxed mb-2">Tournament entry fees are <strong className="text-white">generally non-refundable</strong> once a slot has been confirmed. However, refunds will be issued in the following cases:</p>
+            <li>FF Arena cancels the tournament before it begins — <strong className="text-white">100% refund</strong></li>
+            <li>Technical failure on our platform prevents match from starting — <strong className="text-white">100% refund</strong></li>
+            <li>Duplicate payment due to payment gateway error — <strong className="text-white">100% refund</strong></li>
+          </Section>
+          <Section title="2. Non-Refundable Situations">
+            <li>Player does not join the custom room in time</li>
+            <li>Player is disqualified for rule violations or cheating</li>
+            <li>Player's device / internet issues during the match</li>
+            <li>Player voluntarily withdraws after slot confirmation</li>
+          </Section>
+          <Section title="3. Refund Process">
+            <li>Refund requests must be emailed to <span className="text-[#FFE600]">support@ffarena.in</span> within 48 hours of the tournament.</li>
+            <li>Approved refunds will be credited back to the original payment method (UPI / bank account) within <strong className="text-white">5–7 business days</strong>.</li>
+            <li>Razorpay processing fees (if any) may be deducted from the refund amount.</li>
+          </Section>
+          <Section title="4. Prize Withdrawal">
+            <li>Prize winnings in your FF Arena wallet can be withdrawn at any time (minimum ₹1, no maximum limit).</li>
+            <li>Withdrawals are processed to your UPI ID within 24 hours of request.</li>
+            <li>FF Arena does not charge any withdrawal fees.</li>
+          </Section>
+          <Section title="5. Payment Disputes">
+            <p className="text-zinc-400 text-xs leading-relaxed">For any payment discrepancies or failed transaction queries, contact us at <span className="text-[#FFE600]">support@ffarena.in</span> with your transaction ID and payment screenshot. We will resolve all payment disputes within 72 hours.</p>
+          </Section>
+          <Section title="6. Contact for Refunds">
+            <p className="text-zinc-400 text-xs">📧 <span className="text-[#FFE600]">support@ffarena.in</span></p>
+            <p className="text-zinc-400 text-xs mt-1">Please include: Your registered email, Transaction ID / UTR, Tournament name, and reason for refund request.</p>
+          </Section>
+        </PolicyModal>
+      )}
     </div>
   );
 };
+
+/* ─── Reusable Policy Modal Wrapper ─── */
+const PolicyModal: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+  onClose: () => void;
+}> = ({ title, icon, children, onClose }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+    <div className="bg-[#0A0A0F] border border-zinc-800 rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl animate-scale-up">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/20 flex items-center justify-center">
+            {icon}
+          </div>
+          <h2 className="font-display font-black text-base text-white uppercase tracking-wider">{title}</h2>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white transition"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+      {/* Body */}
+      <div className="overflow-y-auto p-6 space-y-5 flex-1">
+        {children}
+      </div>
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-zinc-800 shrink-0">
+        <button
+          onClick={onClose}
+          className="w-full py-2.5 rounded-xl bg-[#FFE600] text-black font-black text-xs uppercase tracking-wider transition active:scale-95"
+        >
+          I Understand — Close
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+/* ─── Reusable Section inside policy modals ─── */
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <div className="space-y-2">
+    <h3 className="font-black text-xs text-[#FFE600] uppercase tracking-wider">{title}</h3>
+    <ul className="space-y-1.5 list-none">
+      {React.Children.map(children, (child) =>
+        React.isValidElement(child) && child.type === 'li' ? (
+          <li className="flex items-start gap-2 text-xs text-zinc-400">
+            <span className="text-[#FFE600] mt-0.5 shrink-0">•</span>
+            {(child.props as any).children}
+          </li>
+        ) : child
+      )}
+    </ul>
+  </div>
+);

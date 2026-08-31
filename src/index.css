@@ -11,16 +11,24 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    /* Lock to screen — no address bar shift */
-    overflow: hidden;
     background-color: #050507;
     color: #f4f4f5;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    /* Prevent pull-to-refresh & bounce scroll */
-    overscroll-behavior: none;
     /* Prevent text size auto-adjust on orientation change */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+  }
+
+  /* Mobile app: lock scroll (prevents address bar shift & pull-to-refresh) */
+  body.mobile-app {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+
+  /* Landing page: allow normal scroll */
+  body.landing-page {
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   #root {
@@ -35,8 +43,8 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Accessible minimum touch targets */
-  button, a, [role="button"] {
+  /* Accessible minimum touch targets — only inside mobile app, not landing page */
+  .mobile-app button, .mobile-app a, .mobile-app [role="button"] {
     min-height: 36px;
     min-width: 36px;
   }

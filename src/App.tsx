@@ -78,12 +78,15 @@ const MainAppContent: React.FC = () => {
         const forcePlay = urlParams.get('play') === '1' || window.location.hash === '#play';
 
         if (isNative || forcePlay) {
+          document.body.className = 'mobile-app';
           proceedToApp();
         } else {
           // On Web browser, show the landing page with direct APK download & Web app launch
+          document.body.className = 'landing-page';
           setAppState('LANDING');
         }
       } catch {
+        document.body.className = 'landing-page';
         setAppState('LANDING');
       }
     }, 150);

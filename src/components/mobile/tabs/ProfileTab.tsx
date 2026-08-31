@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trophy, Copy, Check, Download, BarChart2 } from 'lucide-react';
+import { Trophy, Copy, Check, Download, BarChart2, ShieldAlert, PlusCircle, ShieldCheck } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { tapFeedback } from '../../../services/soundService';
 
@@ -44,8 +44,9 @@ const KillsChart: React.FC<{ data: number[] }> = ({ data }) => {
 };
 
 export const ProfileTab: React.FC = () => {
-  const { currentUser, achievements, logout } = useApp();
+  const { currentUser, achievements, logout, setViewMode } = useApp();
   const [copied, setCopied] = useState(false);
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
 
   const handleCopyUid = () => {
     tapFeedback();
@@ -63,6 +64,27 @@ export const ProfileTab: React.FC = () => {
 
   return (
     <div className="space-y-4 pb-20 animate-fade-in">
+      {/* Admin Quick Access Banner */}
+      {isAdmin && (
+        <div className="p-4 rounded-3xl bg-gradient-to-r from-purple-950/80 via-slate-900 to-indigo-950/80 border border-purple-500/40 shadow-glow-purple flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
+              <ShieldAlert className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[9px] font-mono font-black uppercase text-purple-400 tracking-wider">ADMINISTRATOR</span>
+              <h4 className="text-xs font-black text-white">FF Arena Governance Center</h4>
+            </div>
+          </div>
+          <button
+            onClick={() => { tapFeedback(); setViewMode('ADMIN'); }}
+            className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs shadow transition active:scale-95 shrink-0"
+          >
+            Open Panel 🛡️
+          </button>
+        </div>
+      )}
+
       {/* 1. Profile Card */}
       <div className="p-5 rounded-3xl bg-[#0E0E12] border border-zinc-800/80 shadow-card-dark flex flex-col items-center text-center">
         {/* Glowing Avatar */}

@@ -41,7 +41,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   const currentTeam = teams.find((t: any) => t.id === currentUser.teamId);
   const currentCollege = colleges.find((c: any) => c.id === currentUser.collegeId);
-  const isAdmin = isWhitelistedAdmin(currentUser.email);
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || isWhitelistedAdmin(currentUser.email);
 
   const handleAdminClick = () => {
     tapFeedback();

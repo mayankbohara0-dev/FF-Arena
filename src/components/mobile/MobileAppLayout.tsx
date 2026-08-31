@@ -4,12 +4,15 @@ import {
   Trophy,
   User as UserIcon,
   Bell,
-  Wifi,
-  Battery,
   Gamepad2,
   Menu,
   ArrowLeft,
   Wallet,
+  LayoutDashboard,
+  Users,
+  Shield,
+  IndianRupee,
+  ShieldAlert,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Tournament, Match } from '../../types';
@@ -30,6 +33,7 @@ import { AdminDashboard } from '../admin/AdminDashboard';
 import { CertificateVerificationPage } from '../certificates/CertificateVerificationPage';
 import { RoomUnlockToast } from './RoomUnlockToast';
 import { tapFeedback } from '../../services/soundService';
+import { isWhitelistedAdmin } from '../../services/adminAuth';
 
 type TabName = 'HOME' | 'TOURNAMENTS' | 'MY_MATCHES' | 'WALLET' | 'RANKINGS' | 'PROFILE' | 'COLLEGE';
 
@@ -54,6 +58,7 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
   const { registrations } = useApp() as any;
 
   const [activeTab, setActiveTab]           = useState<TabName>('HOME');
+  const [adminTab, setAdminTab]             = useState<'DASHBOARD' | 'PLAYERS' | 'TOURNAMENTS' | 'PAYOUTS' | 'FRAUD'>('DASHBOARD');
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [submissionMatch, setSubmissionMatch]       = useState<Match | null>(null);
   const [disputeResultId, setDisputeResultId]       = useState<string | null>(null);
@@ -63,6 +68,16 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
   const [installPrompt, setInstallPrompt]   = useState<any>(null);
   const [showInstallBanner, setShowInstallBanner]   = useState(false);
   const prevParticipants = useRef<Record<string, number>>({});
+
+  const safeBalance = currentUser.walletBalance ?? 0;
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || isWhitelistedAdmin(currentUser.email);
+
+  // Auto-route admin users to admin view on first load
+  useEffect(() => {
+    if (isAdmin && viewMode === 'MOBILE') {
+      setViewMode('ADMIN');
+    }
+  }, [isAdmin]);
 
   /* Room-unlock detection ------------------------------------------------- */
   useEffect(() => {
@@ -95,8 +110,7 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
     setShowInstallBanner(false);
   };
 
-  const safeBalance = currentUser.walletBalance ?? 0;
-  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
+
 
   const handleNav = (tab: TabName) => {
     tapFeedback();
@@ -104,15 +118,13 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
     setActiveTab(tab);
   };
 
-  /* ── Clock state ── */
-  const [clock, setClock] = useState(() =>
-    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  );
-  useEffect(() => {
-    const t = setInterval(() =>
-      setClock(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })), 30000);
-    return () => clearInterval(t);
-  }, []);
+  const ADMIN_NAV_ITEMS = [
+    { tab: 'DASHBOARD' as const, icon: LayoutDashboard, label: 'Dashboard' },
+    { tab: 'PLAYERS'   as const, icon: Users,            label: 'Players' },
+    { tab: 'TOURNAMENTS' as const, icon: Trophy,         label: 'Matches' },
+    { tab: 'PAYOUTS'   as const, icon: IndianRupee,      label: 'Payouts' },
+    { tab: 'FRAUD'     as const, icon: ShieldAlert,      label: 'Anti-Cheat' },
+  ];
 
   return (
     /**
@@ -135,19 +147,8 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
         style={{ isolation: 'isolate' }}
       >
 
-        {/* ── Android status bar ── */}
-        <div
-          className="shrink-0 flex items-center justify-between px-4 bg-[#050507] select-none z-20"
-          style={{ paddingTop: 'max(10px, env(safe-area-inset-top, 10px))', paddingBottom: '4px' }}
-        >
-          <span className="text-[11px] font-bold text-zinc-200 font-mono">{clock}</span>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[9px] font-black text-[#FFE600] tracking-wider">5G</span>
-            <Wifi className="w-3 h-3 text-zinc-400" />
-            <span className="text-[9px] text-zinc-300">98%</span>
-            <Battery className="w-3 h-3 text-zinc-300" />
-          </div>
-        </div>
+        {/* ── Safe area top spacer ── */}
+        <div style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }} />
 
         {/* ── Top app bar ── */}
         <div className="shrink-0 flex items-center justify-between px-3 py-2 bg-[#08080A]/95 border-b border-zinc-900 backdrop-blur-md z-20 gap-2 select-none">
@@ -231,7 +232,7 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
           {viewMode === 'ORGANIZER' ? (
             <OrganizerDashboard />
           ) : viewMode === 'ADMIN' ? (
-            <AdminDashboard />
+            <AdminDashboard activeTab={adminTab} onTabChange={setAdminTab} />
           ) : viewMode === 'CERT_VERIFY' ? (
             <CertificateVerificationPage />
           ) : (
@@ -268,28 +269,55 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
         </div>
 
         {/* ── Bottom navigation bar ── */}
-        <div
-          className="shrink-0 bg-[#08080A]/98 border-t border-zinc-900 flex items-stretch z-20 select-none"
-          style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
-        >
-          {NAV_ITEMS.map(({ tab, icon: Icon, label }) => {
-            const isActive = viewMode === 'MOBILE' && activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => handleNav(tab)}
-                className={`flex-1 flex flex-col items-center justify-center pt-2 pb-1 gap-0.5 min-w-0 transition active:scale-95 ${
-                  isActive ? 'text-[#FFE600]' : 'text-zinc-500'
-                }`}
-                aria-label={label}
-              >
-                <Icon className={`w-[19px] h-[19px] shrink-0 ${isActive ? 'filter drop-shadow-[0_0_6px_rgba(255,230,0,0.6)]' : ''}`} />
-                <span className="text-[9px] font-bold leading-none">{label}</span>
-                {isActive && <div className="w-3.5 h-[2px] rounded-full bg-[#FFE600] mt-0.5" />}
-              </button>
-            );
-          })}
-        </div>
+        {viewMode === 'ADMIN' ? (
+          /* Admin bottom nav — purple theme */
+          <div
+            className="shrink-0 bg-[#0A0712]/98 border-t border-purple-900/60 flex items-stretch z-20 select-none"
+            style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
+          >
+            {ADMIN_NAV_ITEMS.map(({ tab, icon: Icon, label }) => {
+              const isActive = adminTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => { tapFeedback(); setAdminTab(tab); }}
+                  className={`flex-1 flex flex-col items-center justify-center pt-2 pb-1 gap-0.5 min-w-0 transition active:scale-95 ${
+                    isActive ? 'text-purple-400' : 'text-zinc-600'
+                  }`}
+                  aria-label={label}
+                >
+                  <Icon className={`w-[19px] h-[19px] shrink-0 ${isActive ? 'filter drop-shadow-[0_0_6px_rgba(167,139,250,0.7)]' : ''}`} />
+                  <span className="text-[9px] font-bold leading-none">{label}</span>
+                  {isActive && <div className="w-3.5 h-[2px] rounded-full bg-purple-400 mt-0.5" />}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          /* Player bottom nav — yellow theme */
+          <div
+            className="shrink-0 bg-[#08080A]/98 border-t border-zinc-900 flex items-stretch z-20 select-none"
+            style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
+          >
+            {NAV_ITEMS.map(({ tab, icon: Icon, label }) => {
+              const isActive = viewMode === 'MOBILE' && activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => handleNav(tab)}
+                  className={`flex-1 flex flex-col items-center justify-center pt-2 pb-1 gap-0.5 min-w-0 transition active:scale-95 ${
+                    isActive ? 'text-[#FFE600]' : 'text-zinc-500'
+                  }`}
+                  aria-label={label}
+                >
+                  <Icon className={`w-[19px] h-[19px] shrink-0 ${isActive ? 'filter drop-shadow-[0_0_6px_rgba(255,230,0,0.6)]' : ''}`} />
+                  <span className="text-[9px] font-bold leading-none">{label}</span>
+                  {isActive && <div className="w-3.5 h-[2px] rounded-full bg-[#FFE600] mt-0.5" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* ── Room Unlock Toast ── */}
         {roomToast && (

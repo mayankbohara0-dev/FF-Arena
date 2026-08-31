@@ -46,7 +46,8 @@ const CountdownBadge: React.FC<{ startTime: string; status: string }> = ({ start
 };
 
 export const TournamentsTab: React.FC<TournamentsTabProps> = ({ onSelectTournament }) => {
-  const { tournaments } = useApp();
+  const { tournaments, currentUser, setViewMode } = useApp();
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
   const [searchQuery, setSearchQuery] = useState('');
   const [modeFilter, setModeFilter] = useState<ModeFilter>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -155,8 +156,18 @@ export const TournamentsTab: React.FC<TournamentsTabProps> = ({ onSelectTourname
         {filteredTournaments.length === 0 ? (
           <div className="text-center py-10 bg-[#0E0E12] rounded-2xl border border-zinc-800/80 p-6 space-y-2">
             <Trophy className="w-9 h-9 mx-auto text-zinc-600 opacity-50" />
-            <h4 className="text-xs font-bold text-white">No tournaments found</h4>
-            <p className="text-[11px] text-zinc-500">Try a different mode or search query.</p>
+            <h4 className="text-xs font-bold text-white">No tournaments scheduled</h4>
+            <p className="text-[11px] text-zinc-500">
+              {isAdmin ? 'You are logged in as Admin. Create and publish a match now!' : 'New tournaments will appear here once published by organizers.'}
+            </p>
+            {isAdmin && (
+              <button
+                onClick={() => { tapFeedback(); setViewMode('ADMIN'); }}
+                className="mt-2 px-4 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs inline-flex items-center gap-1.5 shadow-glow-yellow-sm active:scale-95 transition"
+              >
+                <span>🛡️ Host Tournament</span>
+              </button>
+            )}
           </div>
         ) : (
           filteredTournaments.map((t: any) => {

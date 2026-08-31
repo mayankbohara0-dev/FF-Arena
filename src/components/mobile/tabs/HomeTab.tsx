@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../../context/AppContext';
 import { Tournament, Match } from '../../../types';
+import { tapFeedback } from '../../../services/soundService';
 
 interface HomeTabProps {
   onSelectTournament: (t: Tournament) => void;
@@ -25,6 +26,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
   onOpenCollegeTab,
 }) => {
   const { currentUser, tournaments, matches, setViewMode } = useApp();
+  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN';
 
   const featuredTourney = tournaments[0];
   const activeMatch = matches.find((m: any) => m.isRoomReleased) || matches[0];
@@ -66,7 +68,7 @@ export const HomeTab: React.FC<HomeTabProps> = ({
       </div>
 
       {/* 2. Hero Elite Tournament Card (Minimal Yellow & Black) */}
-      {featuredTourney && (
+      {featuredTourney ? (
         <div className="space-y-2">
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
@@ -109,11 +111,11 @@ export const HomeTab: React.FC<HomeTabProps> = ({
               <h3 className="font-display font-black text-base sm:text-lg text-white leading-tight">
                 {featuredTourney.name}
               </h3>
-              <p className="text-[10px] text-zinc-400 mt-0.5">Map: {featuredTourney.map} • 48 Max Slots</p>
+              <p className="text-[10px] text-zinc-400 mt-0.5">Map: {featuredTourney.map} • {featuredTourney.maxParticipants || 48} Max Slots</p>
 
               <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-zinc-800/80">
                 <span className="text-[10px] text-zinc-400 font-mono">
-                  Slots: <strong className="text-[#FFE600]">{featuredTourney.currentParticipants}/48</strong>
+                  Slots: <strong className="text-[#FFE600]">{featuredTourney.currentParticipants}/{featuredTourney.maxParticipants || 48}</strong>
                 </span>
                 <span className="px-3 py-1 rounded-lg bg-[#FFE600] text-black font-black text-[10px] tracking-wider uppercase group-hover:bg-[#FFF066] transition">
                   REGISTER NOW →
@@ -122,12 +124,38 @@ export const HomeTab: React.FC<HomeTabProps> = ({
             </div>
           </div>
         </div>
+      ) : (
+        <div className="p-5 rounded-2xl bg-[#0E0E12] border border-zinc-800/80 shadow-card-dark text-center space-y-2">
+          <div className="w-10 h-10 rounded-2xl bg-[#FFE600]/10 border border-[#FFE600]/30 flex items-center justify-center text-[#FFE600] mx-auto">
+            <Trophy className="w-5 h-5" />
+          </div>
+          <h4 className="font-display font-black text-sm text-white">No Tournaments Live Right Now</h4>
+          <p className="text-[11px] text-zinc-400 max-w-xs mx-auto">
+            {isAdmin
+              ? 'You are logged in as Admin. Publish a tournament now to open registrations for players!'
+              : 'New 48-player custom room lobbies are scheduled regularly. Check back shortly!'}
+          </p>
+          {isAdmin && (
+            <button
+              onClick={() => { tapFeedback(); setViewMode('ADMIN'); }}
+              className="mt-2 px-4 py-2 rounded-xl bg-[#FFE600] text-black font-black text-xs inline-flex items-center gap-1.5 shadow-glow-yellow-sm active:scale-95 transition"
+            >
+              <span>🛡️ Host Tournament Live</span>
+            </button>
+          )}
+        </div>
       )}
 
       {/* 3. Minimal Quick Action Tiles */}
       <div className="grid grid-cols-4 gap-2">
         <button
-          onClick={() => onSelectTournament(tournaments[0])}
+          onClick={() => {
+            if (tournaments[0]) {
+              onSelectTournament(tournaments[0]);
+            } else if (isAdmin) {
+              setViewMode('ADMIN');
+            }
+          }}
           className="p-2.5 rounded-2xl bg-[#0E0E12] border border-zinc-800/80 hover:border-[#FFE600]/40 flex flex-col items-center justify-center text-center transition group active:scale-95 shadow-card-dark"
         >
           <div className="w-8 h-8 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/20 flex items-center justify-center text-[#FFE600] mb-1 group-hover:scale-110 transition">

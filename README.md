@@ -1,193 +1,202 @@
-﻿<div align="center">
+<div align="center">
 
-# 🏆 FF ARENA
-### India's #1 Dedicated Free Fire Esports Tournament Platform
+# FF ARENA
+
+### Competitive Free Fire Tournament Management Platform
 
 [![Version](https://img.shields.io/badge/version-1.0.0-FFE600?style=for-the-badge&logo=android&logoColor=black)](https://github.com/mayankbohara0-dev/FF-Arena/releases)
-[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Web%20PWA-00E5FF?style=for-the-badge)](https://github.com/mayankbohara0-dev/FF-Arena)
-[![Stack](https://img.shields.io/badge/Built%20With-React%20%7C%20TypeScript%20%7C%20Capacitor-purple?style=for-the-badge)](https://github.com/mayankbohara0-dev/FF-Arena)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20Web%20PWA-00E5FF?style=for-the-badge)](https://github.com/mayankbohara0-dev/FF-Arena)
+[![Stack](https://img.shields.io/badge/built%20with-React%20%7C%20TypeScript%20%7C%20Capacitor-7C3AED?style=for-the-badge)](https://github.com/mayankbohara0-dev/FF-Arena)
+[![License](https://img.shields.io/badge/license-MIT-22C55E?style=for-the-badge)](LICENSE)
 
-<br />
+<img src="public/logo.png" alt="FF Arena logo" width="160" />
 
-<img src="public/logo.png" alt="FF Arena Logo" width="160" height="160" />
+**A dark, mobile-first esports platform for discovering tournaments, joining custom rooms, tracking results, and managing payouts.**
 
-<p align="center">
-  <strong>Compete in 48-Player Custom Lobbies • Earn ₹10 Per Kill + ₹20 Booyah Bonus • Instant UPI Direct Payouts</strong>
-</p>
-
-[📥 Download Android APK (v1.0.0)](https://github.com/mayankbohara0-dev/FF-Arena/releases/download/v1.0.0/ff-arena-v1.0.apk) • [🌐 Web Landing Page](http://localhost:3000) • [🛡️ Admin Portal](https://github.com/mayankbohara0-dev/FF-Arena)
-
----
+[Download Android APK](https://github.com/mayankbohara0-dev/FF-Arena/releases/download/v1.0.0/ff-arena-v1.0.apk) · [View the repository](https://github.com/mayankbohara0-dev/FF-Arena)
 
 </div>
 
-## 📖 Overview
-
-**FF Arena** is an esports tournament management and competitive gaming platform designed specifically for Free Fire players and community organizers across India.
-
-It features automated 48-player tournament lobbies, real-time slot tracking, custom Room ID & Password broadcasting, AI OCR screenshot scoreboard verification, fair-play anti-cheat sentinel, and direct UPI prize withdrawals to Google Pay, PhonePe, and Paytm.
-
 ---
 
-## ⚡ Key Features
+## Overview
 
-### 🎮 1. Competitive 48-Player Match Engine
-- **Formats:** Solo, Duo, and Squad tournaments across Bermuda, Kalahari, Purgatory, and Alpine.
-- **Entry & Rewards:** ₹15 entry fee with a transparent, skill-based reward formula:
-  - **1st Place (Booyah):** Kills × ₹10 + ₹20 Cash Bonus
-  - **2nd & 3rd Place:** Kills × ₹10 + ₹15 Cash Bonus
-  - **4th to 48th Place:** Kills × ₹10 Per Kill
-- **Live Slot Progress:** Dynamic slot tracking (`0/48` to `48/48`) with auto-locking when lobbies are filled.
+**FF Arena** is a tournament-management application for Free Fire community competitions. It combines a player-facing mobile experience with an administrator workspace for creating tournaments, managing room credentials, reviewing match results, and processing winner payouts.
 
-### 🔑 2. Automated Room ID & Password Delivery
-- Secure room credentials unlock automatically inside the app 15 minutes before the match start time, or as soon as 48 slots are booked.
-- 1-tap **WhatsApp Broadcast** button for tournament admins to push room details to player groups instantly.
+The project is built as a web application that can also be packaged for Android with Capacitor. Its interface includes player tournament flows, wallet and payment screens, leaderboards, match-result review, and administrative governance tools.
 
-### 💳 3. Direct UPI Prize Payouts
-- Mandatory UPI ID collection during slot booking.
-- 1-tap direct payment intent links (GPay, PhonePe, Paytm, BHIM) for administrators to disburse winnings with zero platform deduction fees.
-- Manual UTR transaction reconciliation for wallet deposits.
+> **Important:** FF Arena is an independent community project and is not affiliated with, endorsed by, or sponsored by Garena or Free Fire.
 
-### 🤖 4. AI OCR Scoreboard Verification
-- Players upload end-game Free Fire scoreboards directly in the app.
-- AI OCR extracts player names, kill counts, damage dealt, and placement rankings with 98%+ accuracy within 30 seconds.
+## Core features
 
-### 🛡️ 5. Admin Governance Portal
-- Multi-admin whitelist authentication with encrypted password protection.
-- Real-time 4-metric statistics banner (Total Players, Fees Collected, Pending Payouts, Active Matches).
-- Global player search filter across names, IGNs, Free Fire UIDs, and emails.
-- 1-click **CSV Roster Export** per tournament for offline match recording and scoring.
+### Player experience
 
-### 🚫 6. Fair-Play Anti-Cheat Sentinel
-- Mobile-only enforcement with hardware and emulator detection to eliminate PC/emulator advantages.
-- Dispute management and match review queue.
+- Browse and join Solo, Duo, and Squad tournaments.
+- View maps, entry fees, player capacity, start times, and reward information.
+- Track available slots and joined tournaments.
+- Receive custom Room ID and Password information when a room is unlocked.
+- View match receipts, results, leaderboards, and player statistics.
+- Report match issues with a timestamp and description.
+- Manage a player profile and wallet balance.
 
----
+### Tournament operations
 
-## 🛠️ Technology Stack
+- Create and publish tournaments from the administrator panel.
+- Support maps such as Bermuda, Kalahari, Purgatory, and Alpine.
+- Manage custom-room credentials and release them to registered players.
+- Track tournament occupancy and active matches.
+- Export tournament rosters as CSV files for coordination and scoring.
+
+### Results and payouts
+
+- Review submitted scoreboard information and match results.
+- Maintain winner and kill-bounty payout queues.
+- Support UPI-based payout workflows for administrators.
+- Provide wallet top-up and transaction-reconciliation flows.
+
+### Governance and fair play
+
+- Role-aware administrator workflows for tournament governance.
+- Player search and management tools.
+- Match review and dispute-management flows.
+- Anti-fraud and fair-play review areas for suspicious activity.
+
+## Technology stack
 
 | Layer | Technology |
-|---|---|
-| **Frontend Framework** | [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) |
-| **Build Tool** | [Vite 6](https://vitejs.dev/) |
-| **Mobile Runtime** | [Capacitor 8](https://capacitorjs.com/) (Android Native + Web PWA) |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) + Custom Glassmorphic Dark UI |
-| **Icons & Sounds** | [Lucide React](https://lucide.dev/) + Web Audio API Synthesis |
-| **Backend & Auth** | [Supabase](https://supabase.com/) (Email OTP Authentication + PostgreSQL) |
-| **Native Android** | Java 21 / Gradle 9 / Android SDK 36 |
+| --- | --- |
+| Frontend | React 19 and TypeScript |
+| Build tool | Vite 6 |
+| Mobile packaging | Capacitor 8 and Android |
+| Styling | Tailwind CSS 4 with a custom dark glassmorphic UI |
+| Icons and interaction | Lucide React, Web Audio API, and Capacitor plugins |
+| Backend services | Firebase and Supabase integrations present in the project |
+| Android toolchain | Java, Gradle, and Android SDK |
 
----
+## Project structure
 
-## 📁 Project Architecture
-
-```
-ff-arena/
-├── android/                   # Native Android Capacitor Project
-│   ├── app/
-│   │   ├── src/main/res/      # App Launcher Icons & Splash Screens
-│   │   └── build.gradle       # Android Application Gradle Config
-│   └── build.gradle           # Root Gradle Build File
-├── public/                    # Static Assets & PWA Config
-│   ├── logo.png               # Official High-Res Esports Crest
-│   ├── favicon.png            # Web App Icon
-│   └── ff-arena-v1.0.apk      # Compiled Android Release Binary
+```text
+FF-Arena/
+├── android/                 # Native Android Capacitor project
+├── public/                  # Logos, favicon, PWA files, and APK assets
 ├── src/
-│   ├── components/
-│   │   ├── admin/             # Admin Governance Dashboard & Payout Queues
-│   │   ├── landing/           # Pure APK Download & Promotion Landing Page
-│   │   ├── mobile/            # Player Mobile App UI, Tabs, Modals & Drawers
-│   │   └── common/            # Shared Badges, Stat Cards & Drawers
-│   ├── context/               # Global State Management (AppContext)
-│   ├── services/              # Auth, Sound, Anti-Cheat & Mock Data Services
-│   ├── supabase/              # Supabase Client & OTP Auth Handlers
-│   ├── types/                 # TypeScript Domain Interfaces & Types
-│   ├── App.tsx                # App Entry Point & Platform Routing
-│   ├── index.css              # Global Styling Tokens & Animations
-│   └── main.tsx               # DOM Mount & PWA Service Worker Init
-├── capacitor.config.ts        # Capacitor App & Package Configuration
-├── package.json               # Dependencies & NPM Scripts
-├── vite.config.ts             # Vite Bundler Configuration
-└── README.md                  # Project Documentation
+│   ├── components/          # Player, admin, landing, and shared UI
+│   ├── context/             # Application-wide state management
+│   ├── services/            # Authentication, sound, anti-fraud, and data services
+│   ├── supabase/            # Supabase client and authentication helpers
+│   ├── types/               # Domain types and interfaces
+│   ├── App.tsx              # Main application entry and routing
+│   ├── index.css            # Global styles, tokens, and animations
+│   └── main.tsx             # React mount and PWA initialization
+├── supabase/                # Database schema, policies, seed, and storage SQL
+├── capacitor.config.ts      # Capacitor configuration
+├── package.json             # Scripts and dependencies
+├── vite.config.ts           # Vite configuration
+└── README.md                # Project documentation
 ```
 
----
-
-## 🚀 Quick Start Guide
+## Getting started
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [Android Studio](https://developer.android.com/studio) (with JDK 21 and Android SDK 36 for APK builds)
 
-### 1. Clone & Install Dependencies
+Install **Node.js 18 or later** and npm. Android Studio, a compatible JDK, and the Android SDK are additionally required for native Android builds.
+
+### Install and run locally
+
 ```bash
 git clone https://github.com/mayankbohara0-dev/FF-Arena.git
 cd FF-Arena
 npm install
-```
-
-### 2. Run Development Server
-```bash
 npm run dev
 ```
-Open **[http://localhost:3000](http://localhost:3000)** in your browser to view the Landing Page and App.
 
-### 3. Build Web Production Bundle
+The Vite development server runs at [http://localhost:3000](http://localhost:3000).
+
+### Configure environment variables
+
+Copy the example environment file and replace the placeholder values with credentials from the Firebase project used for local development.
+
 ```bash
-npm run build
+cp .env.example .env
 ```
 
----
+Expected variables:
 
-## 📱 Building the Android APK
+```env
+VITE_FIREBASE_API_KEY=your-api-key-here
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project-id
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+VITE_FIREBASE_APP_ID=your-app-id
+VITE_FIREBASE_MEASUREMENT_ID=your-measurement-id
+```
 
-### Step 1: Sync Web Assets to Android Project
+Do not commit real credentials or production secrets to the repository.
+
+## Available scripts
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Vite development server on port 3000 |
+| `npm run build` | Type-check and build the production web bundle |
+| `npm run preview` | Preview the production bundle locally |
+| `npm run cap:build` | Build the web bundle and synchronize it to Android |
+| `npm run cap:sync` | Synchronize web assets and plugins with Android |
+| `npm run cap:open` | Open the Android project in Android Studio |
+
+## Android build
+
+Build and synchronize the web application first:
+
 ```bash
-npx cap sync android
+npm run cap:build
 ```
 
-### Step 2: Build Debug APK via Gradle CLI
-```powershell
-$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-cd android
-.\gradlew.bat assembleDebug
-```
-The output APK is generated at:
-```
-android/app/build/outputs/apk/debug/app-debug.apk
-```
+Then open the native project in Android Studio:
 
-### Step 3: Open in Android Studio (Optional)
 ```bash
 npx cap open android
 ```
-In Android Studio: Select **Build → Build Bundle(s) / APK(s) → Build APK(s)**.
 
----
+Alternatively, build a debug APK from the `android` directory using the Gradle wrapper:
 
-## 🔐 Administrator Access
+```bash
+cd android
+./gradlew assembleDebug
+```
 
-FF Arena uses a multi-tier whitelisted administrator system. Official admin accounts enter their email to trigger the secure password unlock screen directly:
+On Windows, use `gradlew.bat assembleDebug`. The generated debug APK is typically placed at:
 
-| Role | Access Level |
-|---|---|
-| **SUPER_ADMIN** | Full tournament creation, room broadcast, payout processing, CSV export & admin management |
-| **ADMIN** | Tournament governance, match validation, result processing & anti-cheat moderation |
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
 
----
+## Data and security notes
 
-## ⚖️ Legal & Compliance Notice
+The repository includes SQL files for database schema, row-level-security policies, seed data, and storage setup under `supabase/`. Review and configure these policies before connecting the application to a production backend. Administrator credentials, payout actions, room credentials, and player data should be protected with production-grade authentication and authorization controls.
 
-- **Skill-Based Competition:** FF Arena operates as a skill-based esports platform compliant with Indian regulatory standards for non-wagering skill tournaments.
-- **Independent Community Platform:** FF Arena is an independent community esports application and is not officially affiliated with or endorsed by Garena or Free Fire.
+Financial, tournament, and anti-fraud behavior should be validated for the intended jurisdiction and operating model before public deployment. This README describes the application’s documented workflows; it does not constitute legal, financial, or regulatory advice.
 
----
+## Contributing
 
-## 📄 License
+Contributions are welcome. Create a feature branch, make focused changes, run the production build, and open a pull request with a clear description of the change.
 
-This project is licensed under the [MIT License](LICENSE).
+```bash
+git checkout -b feature/your-change
+npm install
+npm run build
+git add .
+git commit -m "Describe your change"
+git push origin feature/your-change
+```
+
+## License
+
+This project is released under the [MIT License](LICENSE).
 
 <div align="center">
-  <sub>Built with ❤️ for the Indian Free Fire Esports Community.</sub>
+
+**Built for community esports organizers and Free Fire players.**
+
 </div>

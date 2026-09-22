@@ -1,0 +1,199 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email in [
+          'mayankbohara0@gmail.com',
+          'sahilzalte36@gmail.com',
+          'bhadanepavan04@gmail.com',
+          'jaydip13452@gmail.com'
+        ]
+      );
+    }
+
+    // 1. Users collection
+    match /users/{userId} {
+      // Anyone authenticated can read user profile (IGN, tier, rank), or owner can read private profile
+      allow read: if isAuthenticated();
+      
+      // User can create their own doc on sign-up as 'player'
+      allow create: if isOwner(userId) && 
+        (request.resource.data.role == 'player' || isAdmin());
+
+      // User can update their own data, but CANNOT escalate their role unless admin
+      allow update: if (isOwner(userId) && 
+        request.resource.data.role == resource.data.role) || isAdmin();
+
+      // Only admin can delete user docs
+      allow delete: if isAdmin();
+    }
+
+    // 2. Tournaments collection
+    match /tournaments/{tournamentId} {
+      // Anyone (even public visitors) can view tournaments
+      allow read: if true;
+
+      // Only admins can create, update, or delete tournaments
+      allow create, update, delete: if isAdmin();
+    }
+
+    // 3. Registrations collection
+    match /registrations/{registrationId} {
+      // Owner or Admin can read registration
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) || isAdmin()
+      );
+
+      // Player can create their registration; initial status MUST be PAYMENT_PENDING or PENDING_PAYMENT
+      allow create: if isAuthenticated() && 
+        isOwner(request.resource.data.userId) &&
+        (request.resource.data.registrationStatus in ['PAYMENT_PENDING', 'PENDING_PAYMENT']) &&
+        request.resource.data.paymentStatus == 'PENDING';
+
+      // Only Admins can confirm or reject registrations
+      allow update: if isAdmin();
+
+      // Owner can cancel if not yet confirmed, or Admin
+      allow delete: if isAdmin() || (
+        isOwner(resource.data.userId) && (resource.data.registrationStatus in ['PAYMENT_PENDING', 'PENDING_PAYMENT'])
+      );
+    }
+
+    // 4. Payments collection
+    match /payments/{paymentId} {
+      // Owner or Admin can read payment details (private to other players)
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) || isAdmin()
+      );
+
+      // Player can submit a payment with initial status strictly PENDING
+      // Cannot set verifiedAt or verifiedBy; amount must be positive; UTR must be valid
+      allow create: if isAuthenticated() && 
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.status == 'PENDING' &&
+        request.resource.data.amount > 0 &&
+        (!('verifiedAt' in request.resource.data) || request.resource.data.verifiedAt == null) &&
+        (!('verifiedBy' in request.resource.data) || request.resource.data.verifiedBy == null || request.resource.data.verifiedBy == '');
+
+      // Players CANNOT modify verification status or approve payments. Only admins can update
+      allow update: if isAdmin();
+
+      // Only admins can delete payment logs
+      allow delete: if isAdmin();
+    }
+
+    // 5. Payment Settings (merchant UPI, QR code, guidelines)
+    match /paymentSettings/{settingId} {
+      // All players and visitors can read merchant UPI configuration
+      allow read: if true;
+
+      // Only admins can update payment settings
+      allow write: if isAdmin();
+    }
+
+    // 6. Notifications collection
+    match /notifications/{notificationId} {
+      // Owner can read their own notifications
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+
+      // Owner can mark as read
+      allow update: if isAuthenticated() && isOwner(resource.data.userId) &&
+        request.resource.data.userId == resource.data.userId;
+
+      // System or Admin can create notifications
+      allow create: if isAuthenticated();
+
+      // Owner or Admin can delete
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.userId) || isAdmin()
+      );
+    }
+
+    // 7. Payment Verification Logs (Audit trail)
+    match /paymentVerificationLogs/{logId} {
+      // Strictly Admin-only read and write
+      allow read, write: if isAdmin();
+    }
+
+    // 8. Global UTR Registry (Guarantees transaction ID uniqueness across all matches)
+    match /utrRegistry/{utr} {
+      allow read: if isAuthenticated();
+      // Strictly Admin-only write during verification approval
+      allow write: if isAdmin();
+    }
+
+    // 9. Matches collection
+    match /matches/{matchId} {
+      // Anyone can read scheduled matches
+      allow read: if true;
+      // Only admins can create or update match schedules / room info
+      allow write: if isAdmin();
+    }
+
+    // 10. Match Results collection
+    match /matchResults/{resultId} {
+      // Submitting player or Admin can read pending/rejected results; anyone authenticated can read approved results
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.userId) || isAdmin() || resource.data.status == 'APPROVED'
+      );
+
+      // Player can submit a match result strictly with status = PENDING
+      // Cannot set verifiedAt or verifiedBy; placement and kills must be valid
+      allow create: if isAuthenticated() &&
+        isOwner(request.resource.data.userId) &&
+        request.resource.data.status == 'PENDING' &&
+        request.resource.data.placement >= 1 &&
+        request.resource.data.placement <= 48 &&
+        request.resource.data.kills >= 0 &&
+        (!('verifiedAt' in request.resource.data) || request.resource.data.verifiedAt == null) &&
+        (!('verifiedBy' in request.resource.data) || request.resource.data.verifiedBy == null || request.resource.data.verifiedBy == '');
+
+      // Only Admins can approve, reject, or correct results.
+      // Players can only update their own result if it was previously REJECTED to resubmit as PENDING
+      allow update: if isAdmin() || (
+        isAuthenticated() &&
+        isOwner(resource.data.userId) &&
+        resource.data.status == 'REJECTED' &&
+        request.resource.data.status == 'PENDING' &&
+        (!('verifiedAt' in request.resource.data) || request.resource.data.verifiedAt == null) &&
+        (!('verifiedBy' in request.resource.data) || request.resource.data.verifiedBy == null || request.resource.data.verifiedBy == '')
+      );
+
+      // Only admins can delete match result records
+      allow delete: if isAdmin();
+    }
+
+    // 11. Tournament Leaderboards (tournaments/{tournamentId}/leaderboard/{userId})
+    match /tournaments/{tournamentId}/leaderboard/{userId} {
+      // Anyone can view official tournament standings
+      allow read: if true;
+      // Strictly Admin-only write through trusted verification transactions
+      allow write: if isAdmin();
+    }
+
+    // 12. Match Result Verification Audit Logs
+    match /matchResultVerificationLogs/{logId} {
+      // Strictly Admin-only read and write
+      allow read, write: if isAdmin();
+    }
+
+    // Default deny all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

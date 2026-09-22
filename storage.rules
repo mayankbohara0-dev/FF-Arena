@@ -1,0 +1,74 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.email in [
+          'mayankbohara0@gmail.com',
+          'sahilzalte36@gmail.com',
+          'bhadanepavan04@gmail.com',
+          'jaydip13452@gmail.com'
+        ]
+      );
+    }
+
+    // Payment Screenshots: paymentScreenshots/{userId}/{paymentId}/{filename}
+    match /paymentScreenshots/{userId}/{paymentId}/{fileName} {
+      // Only the submitting player or an Admin can read/view payment screenshots
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+
+      // Only the owner can upload screenshots for their payment
+      // Must be an image file and under 5MB
+      allow create: if isAuthenticated() && 
+        isOwner(userId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+
+      // Screenshots cannot be overwritten by players once uploaded; only Admins can delete
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Merchant QR codes & platform branding assets
+    match /paymentAssets/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Match Result Proofs: matchResults/{userId}/{matchId}/{resultId}/{fileName}
+    match /matchResults/{userId}/{matchId}/{resultId}/{fileName} {
+      // Only the submitting player or an Admin can read/view match proof screenshots
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || isAdmin()
+      );
+
+      // Only the player can upload their match result proof (< 5MB, image only)
+      allow create: if isAuthenticated() &&
+        isOwner(userId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+
+      // Immutable once uploaded; only Admins can delete
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

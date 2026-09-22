@@ -8,11 +8,7 @@ import {
   Menu,
   ArrowLeft,
   Wallet,
-  LayoutDashboard,
-  Users,
   Shield,
-  IndianRupee,
-  ShieldAlert,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Tournament, Match } from '../../types';
@@ -28,12 +24,9 @@ import { MatchSubmissionModal } from './modals/MatchSubmissionModal';
 import { DisputeModal } from './modals/DisputeModal';
 import { TeamManagementModal } from './modals/TeamManagementModal';
 import { MobileDrawer } from './MobileDrawer';
-import { OrganizerDashboard } from '../organizer/OrganizerDashboard';
-import { AdminDashboard } from '../admin/AdminDashboard';
 import { CertificateVerificationPage } from '../certificates/CertificateVerificationPage';
 import { RoomUnlockToast } from './RoomUnlockToast';
 import { tapFeedback } from '../../services/soundService';
-import { isWhitelistedAdmin } from '../../services/adminAuth';
 
 type TabName = 'HOME' | 'TOURNAMENTS' | 'MY_MATCHES' | 'WALLET' | 'RANKINGS' | 'PROFILE' | 'COLLEGE';
 
@@ -58,7 +51,6 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
   const { registrations } = useApp() as any;
 
   const [activeTab, setActiveTab]           = useState<TabName>('HOME');
-  const [adminTab, setAdminTab]             = useState<'DASHBOARD' | 'PLAYERS' | 'TOURNAMENTS' | 'PAYOUTS' | 'FRAUD'>('DASHBOARD');
   const [selectedTournament, setSelectedTournament] = useState<Tournament | null>(null);
   const [submissionMatch, setSubmissionMatch]       = useState<Match | null>(null);
   const [disputeResultId, setDisputeResultId]       = useState<string | null>(null);
@@ -70,15 +62,6 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
   const prevParticipants = useRef<Record<string, number>>({});
 
   const safeBalance = currentUser.walletBalance ?? 0;
-  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || isWhitelistedAdmin(currentUser.email);
-
-  // Auto-route admin users to admin view on first load
-  useEffect(() => {
-    if (isAdmin && viewMode === 'MOBILE') {
-      setViewMode('ADMIN');
-    }
-  }, [isAdmin]);
-
   /* Room-unlock detection ------------------------------------------------- */
   useEffect(() => {
     tournaments.forEach((t: any) => {
@@ -117,14 +100,6 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
     if (viewMode !== 'MOBILE') setViewMode('MOBILE');
     setActiveTab(tab);
   };
-
-  const ADMIN_NAV_ITEMS = [
-    { tab: 'DASHBOARD' as const, icon: LayoutDashboard, label: 'Dashboard' },
-    { tab: 'PLAYERS'   as const, icon: Users,            label: 'Players' },
-    { tab: 'TOURNAMENTS' as const, icon: Trophy,         label: 'Matches' },
-    { tab: 'PAYOUTS'   as const, icon: IndianRupee,      label: 'Payouts' },
-    { tab: 'FRAUD'     as const, icon: ShieldAlert,      label: 'Anti-Cheat' },
-  ];
 
   return (
     /**
@@ -189,22 +164,6 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
 
           {/* Right */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  tapFeedback();
-                  setViewMode(viewMode === 'ADMIN' ? 'MOBILE' : 'ADMIN');
-                }}
-                className={`px-2 py-1 rounded-xl text-[10px] font-black uppercase font-mono transition border ${
-                  viewMode === 'ADMIN'
-                    ? 'bg-purple-600 border-purple-400 text-white shadow-glow-purple'
-                    : 'bg-purple-950/40 border-purple-500/40 text-purple-300 hover:bg-purple-900/50'
-                }`}
-              >
-                🛡️ ADMIN
-              </button>
-            )}
-
             <button
               onClick={() => handleNav('WALLET')}
               className="flex items-center gap-1 px-2 py-1 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/30 text-[#FFE600] font-mono text-[11px] font-black active:scale-95 transition"
@@ -229,11 +188,7 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
 
         {/* ── Scrollable content area ── */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none px-3 pt-3">
-          {viewMode === 'ORGANIZER' ? (
-            <OrganizerDashboard />
-          ) : viewMode === 'ADMIN' ? (
-            <AdminDashboard activeTab={adminTab} onTabChange={setAdminTab} />
-          ) : viewMode === 'CERT_VERIFY' ? (
+          {viewMode === 'CERT_VERIFY' ? (
             <CertificateVerificationPage />
           ) : (
             <>
@@ -269,36 +224,10 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
         </div>
 
         {/* ── Bottom navigation bar ── */}
-        {viewMode === 'ADMIN' ? (
-          /* Admin bottom nav — purple theme */
-          <div
-            className="shrink-0 bg-[#0A0712]/98 border-t border-purple-900/60 flex items-stretch z-20 select-none"
-            style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
-          >
-            {ADMIN_NAV_ITEMS.map(({ tab, icon: Icon, label }) => {
-              const isActive = adminTab === tab;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => { tapFeedback(); setAdminTab(tab); }}
-                  className={`flex-1 flex flex-col items-center justify-center pt-2 pb-1 gap-0.5 min-w-0 transition active:scale-95 ${
-                    isActive ? 'text-purple-400' : 'text-zinc-600'
-                  }`}
-                  aria-label={label}
-                >
-                  <Icon className={`w-[19px] h-[19px] shrink-0 ${isActive ? 'filter drop-shadow-[0_0_6px_rgba(167,139,250,0.7)]' : ''}`} />
-                  <span className="text-[9px] font-bold leading-none">{label}</span>
-                  {isActive && <div className="w-3.5 h-[2px] rounded-full bg-purple-400 mt-0.5" />}
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          /* Player bottom nav — yellow theme */
-          <div
-            className="shrink-0 bg-[#08080A]/98 border-t border-zinc-900 flex items-stretch z-20 select-none"
-            style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
-          >
+        <div
+          className="shrink-0 bg-[#08080A]/98 border-t border-zinc-900 flex items-stretch z-20 select-none"
+          style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 6px))' }}
+        >
             {NAV_ITEMS.map(({ tab, icon: Icon, label }) => {
               const isActive = viewMode === 'MOBILE' && activeTab === tab;
               return (
@@ -316,8 +245,7 @@ export const MobileAppLayout: React.FC<{ onOpenNotifications: () => void }> = ({
                 </button>
               );
             })}
-          </div>
-        )}
+        </div>
 
         {/* ── Room Unlock Toast ── */}
         {roomToast && (

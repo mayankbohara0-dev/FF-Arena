@@ -13,6 +13,11 @@ dist-ssr
 *.local
 ff-mobile
 
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -33,3 +38,9 @@ android/.idea
 android/captures
 android/.externalNativeBuild
 android/.cxx
+
+# Database & SQLite files
+server/data/*.db*
+*.db
+*.db-shm
+*.db-wal

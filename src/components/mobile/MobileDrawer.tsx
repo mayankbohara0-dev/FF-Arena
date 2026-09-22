@@ -2,7 +2,6 @@ import React from 'react';
 import {
   X,
   Smartphone,
-  ShieldAlert,
   Award,
   Users,
   GraduationCap,
@@ -13,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { BadgePill } from '../common/BadgePill';
-import { isWhitelistedAdmin } from '../../services/adminAuth';
 import { tapFeedback } from '../../services/soundService';
 
 interface MobileDrawerProps {
@@ -31,7 +29,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
     currentUser,
     viewMode,
     setViewMode,
-    setActiveRole,
     teams,
     colleges,
     logout,
@@ -41,15 +38,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
   const currentTeam = teams.find((t: any) => t.id === currentUser.teamId);
   const currentCollege = colleges.find((c: any) => c.id === currentUser.collegeId);
-  const isAdmin = currentUser.role === 'SUPER_ADMIN' || currentUser.role === 'ADMIN' || isWhitelistedAdmin(currentUser.email);
-
-  const handleAdminClick = () => {
-    tapFeedback();
-    setActiveRole('ADMIN');
-    setViewMode('ADMIN');
-    onClose();
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex bg-black/70 backdrop-blur-sm animate-fade-in">
       <div className="w-full max-w-[320px] bg-[#0c101a] border-r border-slate-800 h-full flex flex-col shadow-2xl animate-slide-right select-none">
@@ -73,11 +61,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 <h3 className="font-display font-black text-base text-white truncate">
                   {currentUser.displayName}
                 </h3>
-                {isAdmin && (
-                  <span className="px-1.5 py-0.2 text-[8px] font-black bg-purple-500 text-white rounded font-mono">
-                    ADMIN
-                  </span>
-                )}
               </div>
               <p className="text-[11px] font-mono text-[#FFE600] font-bold">
                 IGN: {currentUser.gamerProfile?.gameName || currentUser.displayName || 'Player'}
@@ -140,25 +123,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 {viewMode === 'CERT_VERIFY' && <span className="text-[10px] font-mono bg-black/30 px-1.5 py-0.5 rounded">ACTIVE</span>}
               </button>
 
-              {/* ADMIN ACCESS: Only visible to whitelisted admin emails */}
-              {isAdmin && (
-                <button
-                  onClick={handleAdminClick}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-xl font-bold transition border border-purple-500/40 ${
-                    viewMode === 'ADMIN'
-                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-glow-purple'
-                      : 'bg-purple-950/30 text-purple-300 hover:bg-purple-900/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <ShieldAlert className="w-4 h-4 text-purple-400" />
-                    <span>🛡️ Admin Panel & Winner Payouts</span>
-                  </div>
-                  <span className="text-[9px] font-mono font-bold bg-purple-500/30 text-purple-200 px-1.5 py-0.5 rounded">
-                    ADMIN
-                  </span>
-                </button>
-              )}
             </div>
           </div>
 

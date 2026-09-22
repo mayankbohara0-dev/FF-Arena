@@ -15,6 +15,8 @@ ALTER TABLE public.results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.disputes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.certificates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wallets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to check if current user is an Organizer or Admin
 CREATE OR REPLACE FUNCTION public.is_organizer_or_admin()
@@ -33,9 +35,12 @@ CREATE POLICY "Users can view all public profiles"
     ON public.users FOR SELECT
     USING (true);
 
-CREATE POLICY "Users can update their own profile"
-    ON public.users FOR UPDATE
-    USING (auth_id = auth.uid());
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.users;
+REVOKE UPDATE (role, auth_id) ON TABLE public.users FROM anon, authenticated;
+
+-- Wallet mutations are service-role-only until payment webhooks and payout jobs exist.
+REVOKE INSERT, UPDATE, DELETE ON TABLE public.wallets FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE ON TABLE public.wallet_transactions FROM anon, authenticated;
 
 -- 2. GAMER PROFILES POLICIES
 CREATE POLICY "Public can view gamer profiles"

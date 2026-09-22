@@ -349,3 +349,208 @@ export interface PushNotification {
 export type NotificationItem = PushNotification;
 
 export type ViewMode = 'MOBILE' | 'ORGANIZER' | 'ADMIN' | 'CERT_VERIFY' | 'FLUTTER_SPEC' | 'WALLET';
+
+// ─── FIREBASE FIRESTORE DATA MODELS (STEP 1) ──────────────────────────────────
+
+export type AppUserRole = 'player' | 'admin';
+
+export interface UserDocument {
+  uid: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: AppUserRole;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export type TournamentDocStatus = 'upcoming' | 'live' | 'completed' | 'FULL';
+
+export interface TournamentDocument {
+  tournamentId: string;
+  name: string;
+  game: string;
+  category: 'Battle Royale' | 'Clash Squad';
+  format: 'SOLO' | 'DUO' | 'SQUAD' | 'BIG_SLOT' | 'CLASH_SQUAD';
+  entryFee: number;
+  capacity: number;
+  occupiedSlots: number;
+  availableSlots: number;
+  perKillReward: number;
+  prizePool: {
+    first?: number;
+    second?: number;
+    third?: number;
+    winner?: number;
+    [key: string]: any;
+  };
+  status: TournamentDocStatus;
+  startTime: string;
+  roomId?: string;
+  roomPassword?: string;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export type RegistrationStatus = 'PAYMENT_PENDING' | 'PENDING_PAYMENT' | 'CONFIRMED' | 'REJECTED' | 'PAYMENT_REJECTED';
+export type PaymentStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'VERIFIED';
+
+export interface RegistrationDocument {
+  registrationId: string;
+  userId: string;
+  tournamentId: string;
+  playerName: string;
+  playerUid: string;
+  teamName?: string;
+  teammates?: Array<{ name: string; uid: string }>;
+  paymentId: string;
+  paymentStatus: PaymentStatus;
+  registrationStatus: RegistrationStatus;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export interface PaymentDocument {
+  paymentId: string;
+  userId: string;
+  tournamentId: string;
+  tournamentName: string;
+  playerName: string;
+  amount: number;
+  utr: string;
+  screenshotUrl?: string;
+  registrationId?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNote?: string;
+  submittedAt: any;
+  verifiedAt?: any;
+  verifiedBy?: string;
+}
+
+export interface PaymentVerificationLogDocument {
+  logId: string;
+  paymentId: string;
+  registrationId?: string;
+  tournamentId: string;
+  userId: string;
+  adminUid: string;
+  action: 'APPROVED' | 'REJECTED';
+  amount: number;
+  utr: string;
+  reason?: string;
+  timestamp: any;
+}
+
+export interface PaymentSettingsDocument {
+  upiId?: string;
+  qrImageUrl?: string;
+  instructions: string;
+  enabled: boolean;
+  merchantUpiId?: string;
+  merchantName?: string;
+  qrCodeUrl?: string;
+  updatedAt?: any;
+  updatedBy?: string;
+}
+
+export interface NotificationDocument {
+  notificationId: string;
+  userId: string;
+  title: string;
+  body: string;
+  type: string;
+  read: boolean;
+  createdAt: any;
+}
+
+// ─── STEP 5: MATCH RESULTS & LEADERBOARD DATA MODELS ──────────────────────────
+
+export type MatchDocStatus = 'UPCOMING' | 'LIVE' | 'COMPLETED';
+
+export interface MatchDocument {
+  matchId: string;
+  tournamentId: string;
+  tournamentName: string;
+  matchNumber: number;
+  scheduledAt: any;
+  status: MatchDocStatus;
+  roomId?: string;
+  roomPassword?: string;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export type MatchResultStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface TournamentScoringConfig {
+  killPointValue: number;
+  placementPoints: Record<string, number>;
+}
+
+export interface MatchResultDocument {
+  resultId: string;
+  matchId: string;
+  tournamentId: string;
+  tournamentName?: string;
+  matchNumber?: number;
+  userId: string;
+  playerName: string;
+  playerUid?: string;
+  teamId?: string;
+  teamName?: string;
+  placement: number;
+  kills: number;
+  calculatedScore: number;
+  playerSubmittedScore?: number;
+  proofImageUrl: string;
+  status: MatchResultStatus;
+  adminNote?: string;
+  submittedAt: any;
+  verifiedAt?: any;
+  verifiedBy?: string;
+  createdAt: any;
+  updatedAt: any;
+}
+
+export interface LeaderboardMatchStat {
+  resultId: string;
+  kills: number;
+  placement: number;
+  score: number;
+  approvedAt?: any;
+}
+
+export interface LeaderboardEntryDocument {
+  userId: string;
+  tournamentId: string;
+  playerName: string;
+  playerUid?: string;
+  teamId?: string;
+  teamName?: string;
+  matchesPlayed: number;
+  totalKills: number;
+  totalPoints: number;
+  bestPlacement: number;
+  matchBreakdown: Record<string, LeaderboardMatchStat>;
+  updatedAt: any;
+}
+
+export interface MatchResultVerificationLogDocument {
+  logId: string;
+  resultId: string;
+  matchId: string;
+  tournamentId: string;
+  action: 'APPROVED' | 'REJECTED' | 'CORRECTED';
+  oldStatus?: string;
+  newStatus: string;
+  oldPlacement?: number;
+  newPlacement: number;
+  oldKills?: number;
+  newKills: number;
+  oldScore?: number;
+  newScore: number;
+  adminUid: string;
+  adminNote?: string;
+  createdAt: any;
+}
+

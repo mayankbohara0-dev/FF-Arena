@@ -41,8 +41,6 @@ import {
   registerPlayerForTournament as sbRegisterPlayer,
   subscribeUserRegistrations as sbSubscribeRegistrations,
   submitMatchResult as sbSubmitResult,
-  updateWalletBalance as sbUpdateWallet,
-  addWalletTransaction as sbAddTransaction,
 } from '../supabase/api';
 
 interface AppContextType {
@@ -73,7 +71,6 @@ interface AppContextType {
   setSelectedCertificateId: (id: string | null) => void;
   
   // Business logic methods
-  addCash: (amount: number) => void;
   withdrawWinnings: (amount: number, upiId: string) => Promise<{ success: boolean; message: string }>;
   payTournamentEntry: (tournamentId: string, teamId?: string, upiId?: string) => Promise<{ success: boolean; message: string; slotNumber?: number }>;
   registerForTournament: (tournamentId: string, teamId?: string, upiId?: string) => Promise<{ success: boolean; message: string }>;
@@ -104,8 +101,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return {
           ...INITIAL_CURRENT_USER,
           ...parsed,
-          walletBalance: typeof parsed.walletBalance === 'number' ? parsed.walletBalance : INITIAL_CURRENT_USER.walletBalance,
-          winningsBalance: typeof parsed.winningsBalance === 'number' ? parsed.winningsBalance : INITIAL_CURRENT_USER.winningsBalance,
+          role: parsed.role === 'TEAM_CAPTAIN' ? 'TEAM_CAPTAIN' : 'PLAYER',
+          walletBalance: INITIAL_CURRENT_USER.walletBalance,
+          winningsBalance: INITIAL_CURRENT_USER.winningsBalance,
         };
       } catch {
         return INITIAL_CURRENT_USER;
@@ -145,8 +143,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          setCurrentUser((prev) => ({ ...prev, ...parsed }));
-          if (parsed.role) setActiveRoleState(parsed.role);
+          setCurrentUser((prev) => ({
+            ...prev,
+            ...parsed,
+            role: parsed.role === 'TEAM_CAPTAIN' ? 'TEAM_CAPTAIN' : 'PLAYER',
+            walletBalance: INITIAL_CURRENT_USER.walletBalance,
+            winningsBalance: INITIAL_CURRENT_USER.winningsBalance,
+          }));
+          setActiveRoleState(parsed.role === 'TEAM_CAPTAIN' ? 'TEAM_CAPTAIN' : 'PLAYER');
         } catch {
           // ignore
         }
@@ -187,12 +191,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currentUser.id]);
 
   const setActiveRole = (role: UserRole) => {
+    if (role !== 'PLAYER' && role !== 'TEAM_CAPTAIN') return;
     setActiveRoleState(role);
     setCurrentUser((prev) => ({ ...prev, role }));
   };
 
   const updateUserProfile = (updates: Partial<User>) => {
-    setCurrentUser((prev) => ({ ...prev, ...updates }));
+    const { role: _role, walletBalance: _walletBalance, winningsBalance: _winningsBalance, ...safeUpdates } = updates;
+    setCurrentUser((prev) => ({ ...prev, ...safeUpdates }));
   };
 
   const logout = () => {
@@ -237,78 +243,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
-  // 1. WALLET: ADD CASH
-  const addCash = (amount: number) => {
-    setCurrentUser((prev) => ({
-      ...prev,
-      walletBalance: (prev.walletBalance ?? 0) + amount,
-    }));
-
-    const tx: WalletTransaction = {
-      id: `tx-${Date.now()}`,
-      type: 'DEPOSIT',
-      title: 'Added Cash via UPI Gateway',
-      amount: amount,
-      date: 'Just Now',
-      status: 'SUCCESS',
-      utrRef: `DEP-${Date.now().toString().slice(-8)}`,
-    };
-    setWalletTransactions((prev) => [tx, ...prev]);
-
-    if (isSupabaseConfigured()) {
-      sbUpdateWallet(currentUser.id, amount, 0).catch(console.error);
-      sbAddTransaction({
-        userId: currentUser.id,
-        type: 'DEPOSIT',
-        title: 'Added Cash via UPI Gateway',
-        amount,
-        status: 'SUCCESS',
-        utrRef: tx.utrRef,
-      }).catch(console.error);
-    }
-
-    addNotification('Cash Added! 💳', `₹${amount} added successfully to your wallet.`, 'WALLET_CREDIT');
-  };
-
-  // 2. WALLET: WITHDRAW WINNINGS
+  // Money movement must be performed by a server-side payment processor.
   const withdrawWinnings = async (amount: number, upiId: string): Promise<{ success: boolean; message: string }> => {
-    const available = currentUser.winningsBalance ?? 0;
-    if (amount <= 0) return { success: false, message: 'Invalid amount' };
-    if (amount > available) return { success: false, message: `Only ₹${available} available in winnings balance.` };
-    if (!upiId.includes('@')) return { success: false, message: 'Please enter a valid UPI ID (e.g. name@okaxis).' };
-
-    setCurrentUser((prev) => ({
-      ...prev,
-      walletBalance: Math.max(0, (prev.walletBalance ?? 0) - amount),
-      winningsBalance: Math.max(0, (prev.winningsBalance ?? 0) - amount),
-    }));
-
-    const tx: WalletTransaction = {
-      id: `tx-${Date.now()}`,
-      type: 'WITHDRAW',
-      title: `Instant UPI Withdrawal to ${upiId}`,
-      amount: -amount,
-      date: 'Just Now',
-      status: 'SUCCESS',
-      utrRef: `UPI-${Date.now().toString().slice(-8)}`,
-    };
-    setWalletTransactions((prev) => [tx, ...prev]);
-
-    if (isSupabaseConfigured()) {
-      sbUpdateWallet(currentUser.id, -amount, -amount).catch(console.error);
-      sbAddTransaction({
-        userId: currentUser.id,
-        type: 'WITHDRAW',
-        title: `Instant UPI Withdrawal to ${upiId}`,
-        amount: -amount,
-        status: 'SUCCESS',
-        utrRef: tx.utrRef,
-      }).catch(console.error);
-    }
-
-    addNotification('Withdrawal Processed! 💸', `₹${amount} transferred to ${upiId} via Instant UPI.`, 'WALLET_CREDIT');
-    triggerConfetti();
-    return { success: true, message: `₹${amount} transferred successfully to ${upiId}!` };
+    return { success: false, message: 'Withdrawals are unavailable until server-side payout processing is configured.' };
   };
 
   // 3. TOURNAMENT: PAY ENTRY & BOOK SLOT (₹15 Entry Fee, 48 Slots Trigger)
@@ -382,14 +319,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         tournamentId,
         userId: currentUser.id,
         slotNumber: assignedSlot,
-      }).catch(console.error);
-      sbUpdateWallet(currentUser.id, -entryFee, 0).catch(console.error);
-      sbAddTransaction({
-        userId: currentUser.id,
-        type: 'ENTRY',
-        title: `Entry Fee: ${tournament.name}`,
-        amount: -entryFee,
-        status: 'PAID',
       }).catch(console.error);
     }
     setTournaments((prev) =>
@@ -883,7 +812,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsMobileFrame,
         setActiveTournamentId,
         setSelectedCertificateId,
-        addCash,
         withdrawWinnings,
         payTournamentEntry,
         registerForTournament,

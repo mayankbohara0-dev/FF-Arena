@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { AppProvider } from './context/AppContext';
-import { MobileAppLayout } from './components/mobile/MobileAppLayout';
-import { NotificationDrawer } from './components/common/NotificationDrawer';
-import { OnboardingFlow } from './components/mobile/OnboardingFlow';
-import { LoginScreen } from './components/mobile/LoginScreen';
+import { FFArenaMockUI } from './components/mobile/FFArenaMockUI';
 import { LandingPage } from './components/landing/LandingPage';
+import { AuthProvider } from './context/AuthContext';
+import { AppProvider } from './context/AppContext';
+import { Smartphone, Monitor, Globe, Gamepad2, Wifi, Battery, Signal } from 'lucide-react';
 
-type AppState = 'LOADING' | 'LANDING' | 'ONBOARDING' | 'LOGIN' | 'APP';
-
-// Global error boundary to catch JS crashes on Android WebView
+// Global error boundary to catch any JS crashes
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error: string }
@@ -53,89 +49,122 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-const MainAppContent: React.FC = () => {
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [appState, setAppState] = useState<AppState>('LOADING');
-
-  const proceedToApp = () => {
-    const onboarded = localStorage.getItem('ff_onboarded');
-    const user = localStorage.getItem('ff_user');
-    if (!onboarded) {
-      setAppState('ONBOARDING');
-    } else if (!user) {
-      setAppState('LOGIN');
-    } else {
-      setAppState('APP');
-    }
-  };
+export function App() {
+  const [view, setView] = useState<'APP' | 'LANDING'>('APP');
+  const [isFramed, setIsFramed] = useState(true);
+  const [currentTime, setCurrentTime] = useState('9:41');
 
   useEffect(() => {
-    // Check if inside native Android APK or on Web
-    const timer = setTimeout(() => {
-      try {
-        const isNative = Capacitor.isNativePlatform();
-        const urlParams = new URLSearchParams(window.location.search);
-        const forcePlay = urlParams.get('play') === '1' || window.location.hash === '#play';
-
-        if (isNative || forcePlay) {
-          document.body.className = 'mobile-app';
-          proceedToApp();
-        } else {
-          // On Web browser, show the landing page with direct APK download & Web app launch
-          document.body.className = 'landing-page';
-          setAppState('LANDING');
-        }
-      } catch {
-        document.body.className = 'landing-page';
-        setAppState('LANDING');
-      }
-    }, 150);
-    return () => clearTimeout(timer);
+    const updateClock = () => {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      setCurrentTime(`${h}:${m}`);
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  /* Loading splash */
-  if (appState === 'LOADING') {
+  if (view === 'LANDING') {
     return (
-      <div className="w-full h-full bg-[#050507] flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <img
-            src="/logo.png"
-            alt="FF Arena"
-            className="w-20 h-20 object-contain mx-auto drop-shadow-[0_0_20px_rgba(255,230,0,0.5)] animate-pulse"
-          />
-          <p className="text-xs text-zinc-500 font-bold tracking-widest uppercase">FF ARENA</p>
-          <div className="w-8 h-0.5 bg-[#FFE600] rounded-full mx-auto animate-pulse" />
-        </div>
+      <div className="relative min-h-screen bg-[#050507]">
+        {/* Floating Return Button */}
+        <button
+          onClick={() => setView('APP')}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl bg-[#FFE600] text-black font-black text-xs uppercase tracking-wider shadow-[0_4px_25px_rgba(255,230,0,0.5)] transition active:scale-95 cursor-pointer hover:bg-[#FFF066]"
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span>Launch FF Arena App</span>
+        </button>
+        <LandingPage />
       </div>
     );
   }
 
-  if (appState === 'LANDING') {
-    return <LandingPage />;
-  }
-
-  if (appState === 'ONBOARDING') {
-    return <OnboardingFlow onComplete={() => setAppState('LOGIN')} />;
-  }
-
-  if (appState === 'LOGIN') {
-    return <LoginScreen onLogin={() => setAppState('APP')} />;
-  }
-
-  return (
-    <>
-      <MobileAppLayout onOpenNotifications={() => setIsNotifOpen(true)} />
-      <NotificationDrawer isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
-    </>
-  );
-};
-
-export function App() {
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <MainAppContent />
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          <div className="w-full h-[100dvh] bg-[#050811] flex flex-col items-center justify-center overflow-hidden font-sans text-white select-none">
+            {/* Desktop Top Control Bar (Hidden on Mobile viewports) */}
+            <header className="hidden md:flex w-full items-center justify-between px-6 py-2 bg-[#080D18]/90 border-b border-[#202B40] flex-shrink-0 z-30">
+              <div className="flex items-center gap-3">
+                <img src="/logo.png" alt="FF Arena" className="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(255,214,0,0.4)]" />
+                <div>
+                  <span className="font-black text-xs text-white tracking-widest uppercase">FF ARENA</span>
+                  <span className="ml-2 text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#FFD600]/15 border border-[#FFD600]/30 text-[#FFD600]">
+                    MOBILE ESPORTS UI
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsFramed(!isFramed)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer"
+                  style={{
+                    background: isFramed ? 'rgba(255,214,0,0.15)' : '#111A2C',
+                    border: `1px solid ${isFramed ? 'rgba(255,214,0,0.4)' : '#202B40'}`,
+                    color: isFramed ? '#FFD600' : '#8B96A8',
+                  }}
+                >
+                  {isFramed ? <Smartphone className="w-3.5 h-3.5" /> : <Monitor className="w-3.5 h-3.5" />}
+                  <span>{isFramed ? 'Phone Frame' : 'Full Screen'}</span>
+                </button>
+
+                <button
+                  onClick={() => setView('LANDING')}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition active:scale-95 cursor-pointer bg-[#111A2C] border border-[#202B40] text-[#8B96A8] hover:text-white"
+                >
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>Landing Page</span>
+                </button>
+              </div>
+            </header>
+
+            {/* Main Content Area */}
+            <main className="flex-1 w-full flex items-center justify-center relative overflow-hidden">
+              {/* Subtle Ambient Esports Lighting */}
+              <div className="absolute top-1/4 -left-40 w-96 h-96 bg-[#FFD600]/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-1/4 -right-40 w-96 h-96 bg-[#3B82F6]/5 rounded-full blur-3xl pointer-events-none" />
+
+              {isFramed ? (
+                /* Framed Smartphone Simulator */
+                <div className="relative w-full max-w-[425px] h-full md:h-[94vh] md:max-h-[880px] md:rounded-[44px] md:border-[6px] md:border-[#1F293D] shadow-[0_25px_70px_rgba(0,0,0,0.9),0_0_40px_rgba(255,214,0,0.08)] bg-[#070707] flex flex-col overflow-hidden">
+                  {/* Dynamic Island / Bezel Top Notch (desktop only) */}
+                  <div className="hidden md:flex items-center justify-between px-6 pt-3 pb-1 bg-[#080D18] flex-shrink-0">
+                    <span className="text-[11px] font-bold tracking-tight text-zinc-300 font-mono">{currentTime}</span>
+                    <div className="w-24 h-4 rounded-full bg-black flex items-center justify-center">
+                      <div className="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-800" />
+                    </div>
+                    <div className="flex items-center gap-1.5 text-zinc-400">
+                      <Signal className="w-3 h-3" />
+                      <Wifi className="w-3 h-3" />
+                      <Battery className="w-3.5 h-3.5 text-emerald-400" />
+                    </div>
+                  </div>
+
+                  {/* Mobile App Viewport */}
+                  <div className="flex-1 w-full overflow-hidden flex flex-col">
+                    <FFArenaMockUI />
+                  </div>
+
+                  {/* Home Indicator Bar (desktop only) */}
+                  <div className="hidden md:block py-1 bg-[#080D18] flex-shrink-0">
+                    <div className="w-28 h-1 bg-zinc-700/60 rounded-full mx-auto" />
+                  </div>
+                </div>
+              ) : (
+                /* Fullscreen Responsive Layout */
+                <div className="w-full h-full flex flex-col bg-[#070707]">
+                  <FFArenaMockUI />
+                </div>
+              )}
+            </main>
+          </div>
+        </AppProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

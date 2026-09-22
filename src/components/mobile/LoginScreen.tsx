@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Mail, Shield, Gamepad2, ChevronRight, RefreshCw, CheckCircle, Sparkles, Lock } from "lucide-react";
+import { Mail, Shield, Gamepad2, ChevronRight, RefreshCw, CheckCircle, Sparkles } from "lucide-react";
 import { sendEmailOtp, verifyEmailOtp, registerPlayerAccount } from "../../supabase/auth";
 import { tapFeedback, successFeedback, playError } from "../../services/soundService";
-import { OFFICIAL_ADMINS, verifyAdminPassword } from "../../services/adminAuth";
 
 interface LoginScreenProps {
   onLogin: () => void;
 }
 
-type Step = "EMAIL" | "ADMIN_PASSWORD" | "OTP" | "PROFILE";
+type Step = "EMAIL" | "OTP" | "PROFILE";
 
 const QUICK_DOMAINS = ["@gmail.com", "@yahoo.com", "@outlook.com"];
 
@@ -16,7 +15,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [step, setStep]           = useState<Step>("EMAIL");
   const [email, setEmail]         = useState("");
   const [otp, setOtp]             = useState("");
-  const [adminPass, setAdminPass] = useState("");
   const [gameName, setGameName]   = useState("");
   const [gameUid, setGameUid]     = useState("");
   const [loading, setLoading]     = useState(false);
@@ -46,12 +44,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
       return;
     }
 
-    if (OFFICIAL_ADMINS[cleanEmail]) {
-      successFeedback();
-      setStep("ADMIN_PASSWORD");
-      return;
-    }
-
     setLoading(true);
     try {
       const res = await sendEmailOtp(cleanEmail);
@@ -69,61 +61,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAdminLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    tapFeedback();
-    setError("");
-
-    const cleanEmail = email.trim().toLowerCase();
-    if (!verifyAdminPassword(adminPass, cleanEmail)) {
-      playError();
-      setError("Incorrect admin password. Access denied.");
-      setAdminPass("");
-      return;
-    }
-
-    const adminInfo = OFFICIAL_ADMINS[cleanEmail];
-    const adminUid = `admin-${cleanEmail.split("@")[0]}`;
-
-    localStorage.setItem("ff_user", JSON.stringify({ uid: adminUid, email: cleanEmail, gameName: adminInfo.name, gameUid: "ADMIN" }));
-    localStorage.setItem("ff_arena_user", JSON.stringify({
-      id: adminUid,
-      email: cleanEmail,
-      username: adminInfo.name.toLowerCase().replace(/\s+/g, "_"),
-      displayName: adminInfo.name,
-      role: adminInfo.role,
-      status: "Active",
-      gamerProfile: {
-        id: `gp-${adminUid}`,
-        userId: adminUid,
-        gameUid: "ADMIN",
-        gameName: adminInfo.name.toUpperCase().replace(/\s+/g, "_"),
-        region: "IND",
-        rating: 9999,
-        tier: "Grandmaster",
-        rank: 1,
-        totalMatches: 0,
-        totalTournaments: 0,
-        totalWins: 0,
-        top3Finishes: 0,
-        top10Finishes: 0,
-        totalKills: 0,
-        avgKills: 0,
-        avgPlacement: 0,
-        winRate: 0,
-        headshotRate: 0,
-        verified: true,
-      },
-      walletBalance: 0,
-      winningsBalance: 0,
-      createdAt: new Date().toISOString(),
-    }));
-    localStorage.setItem("ff_onboarded", "true");
-    window.dispatchEvent(new Event('storage'));
-    successFeedback();
-    onLogin();
   };
 
   const handleVerifyOTP = async (e: React.FormEvent) => {
@@ -148,7 +85,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         setError(res.error || "Invalid OTP code. Please try again.");
       }
     } catch {
-      setStep("PROFILE");
+      playError();
+      setError("Verification failed. Please request a new code.");
     } finally {
       setLoading(false);
     }
@@ -228,8 +166,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     }
   };
 
-  const isAdminFlow = step === "ADMIN_PASSWORD";
-  const indicatorSteps: Step[] = isAdminFlow ? ["EMAIL", "ADMIN_PASSWORD"] : ["EMAIL", "OTP", "PROFILE"];
+  const indicatorSteps: Step[] = ["EMAIL", "OTP", "PROFILE"];
 
   return (
     <div className="w-full h-full bg-[#050507] flex flex-col items-center justify-center px-6 relative overflow-hidden">
@@ -244,7 +181,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         <h1 className="font-display font-black text-2xl text-white">FF ARENA</h1>
         <div className="flex items-center justify-center gap-1 mt-1 text-[11px] text-[#FFE600] font-bold">
           <Sparkles className="w-3 h-3" />
-          <span>{isAdminFlow ? "Admin Secure Portal" : "100% Free Instant Email OTP"}</span>
+          <span>100% Free Instant Email OTP</span>
         </div>
       </div>
 
@@ -253,7 +190,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
           <React.Fragment key={s}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition ${
               step === s
-                ? isAdminFlow ? "bg-purple-500 text-white" : "bg-[#FFE600] text-black shadow-glow-yellow-sm"
+                ? "bg-[#FFE600] text-black shadow-glow-yellow-sm"
                 : indicatorSteps.indexOf(step) > i ? "bg-[#FFE600]/30 text-[#FFE600]" : "bg-zinc-800 text-zinc-500"
             }`}>
               {indicatorSteps.indexOf(step) > i ? <CheckCircle className="w-3.5 h-3.5" /> : i + 1}
@@ -312,50 +249,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
               className="w-full py-3 rounded-2xl bg-[#FFE600] text-black font-black text-sm tracking-wider uppercase shadow-glow-yellow transition active:scale-95 disabled:opacity-40 flex items-center justify-center gap-2"
             >
               {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <>CONTINUE <ChevronRight className="w-4 h-4" /></>}
-            </button>
-          </form>
-        )}
-
-        {step === "ADMIN_PASSWORD" && (
-          <form onSubmit={handleAdminLogin} className="space-y-4 animate-fade-in">
-            <div className="text-center mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center mx-auto mb-2">
-                <Lock className="w-6 h-6 text-purple-400" />
-              </div>
-              <h2 className="font-black text-lg text-white">Admin Secure Login</h2>
-              <p className="text-xs text-zinc-500">Signing in as <span className="text-purple-400 font-bold">{email}</span></p>
-            </div>
-
-            <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-500/20 text-[10px] text-purple-300">
-              Admin Portal — Enter your private admin password to continue
-            </div>
-
-            <input
-              type="password"
-              value={adminPass}
-              onChange={(e) => setAdminPass(e.target.value)}
-              placeholder="Enter admin password..."
-              className="w-full bg-[#0E0E12] border border-zinc-800 rounded-2xl px-4 py-3 text-white text-sm font-mono font-bold focus:outline-none focus:border-purple-500 transition"
-              autoFocus
-              required
-            />
-
-            {error && <p className="text-red-400 text-xs text-center animate-fade-in">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={!adminPass.trim()}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-sm uppercase tracking-wider transition active:scale-95 disabled:opacity-40"
-            >
-              UNLOCK ADMIN PANEL
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { tapFeedback(); setStep("EMAIL"); setAdminPass(""); setError(""); }}
-              className="w-full text-center text-xs text-zinc-500 hover:text-white transition"
-            >
-              Change email
             </button>
           </form>
         )}

@@ -19,7 +19,7 @@ const ADMIN_UPI_ID = 'mayankbohara0@oksbi';
 const ADMIN_UPI_NAME = 'Mayank Bohara (FF Arena)';
 
 export const WalletTab: React.FC = () => {
-  const { currentUser, walletTransactions, addCash, withdrawWinnings } = useApp();
+  const { currentUser, walletTransactions, withdrawWinnings } = useApp();
   const [withdrawAmount, setWithdrawAmount] = useState('50');
   const [upiId, setUpiId] = useState(currentUser.upiId || '');
   const [isWithdrawing, setIsWithdrawing] = useState(false);
@@ -64,8 +64,8 @@ export const WalletTab: React.FC = () => {
   };
 
   const handlePaymentSuccess = (addedAmount: number) => {
-    addCash(Number(addedAmount || 15));
-    successFeedback();
+    void addedAmount;
+    playError();
     setActiveModal('NONE');
   };
 
@@ -232,9 +232,6 @@ export const WalletTab: React.FC = () => {
                   disabled={!depositUtr.trim() || Number(depositAmount) < 15}
                   onClick={() => {
                     tapFeedback();
-                    // In production this would submit to admin for verification
-                    // For now add to passbook as pending
-                    addCash(0); // mark as pending, not credited yet
                     setDepositSubmitted(true);
                   }}
                   className="w-full py-2.5 rounded-xl bg-[#FFE600] text-black font-black text-xs uppercase shadow-glow-yellow-sm transition active:scale-95 disabled:opacity-40"

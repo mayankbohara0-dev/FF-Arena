@@ -2,7 +2,7 @@
  * Supabase Database, Realtime & Storage Service — FF Arena
  */
 import { supabase, isSupabaseConfigured } from './client';
-import { Tournament, Match, Registration, MatchResult, User, WalletTransaction } from '../types';
+import { Tournament, Match, Registration, MatchResult, User } from '../types';
 
 // ── TOURNAMENTS ──────────────────────────────────────────────────────────────
 
@@ -348,57 +348,6 @@ export async function upsertUserProfile(user: {
   } catch (err) {
     console.error('[Supabase] upsertUserProfile exception:', err);
     return null;
-  }
-}
-
-export async function updateWalletBalance(userId: string, balanceDelta: number, winningsDelta: number): Promise<boolean> {
-  if (!isSupabaseConfigured() || !userId) return false;
-  try {
-    const { data: current } = await supabase
-      .from('wallets')
-      .select('balance, winnings')
-      .eq('user_id', userId)
-      .single();
-
-    const newBalance = Math.max(0, (current?.balance || 0) + balanceDelta);
-    const newWinnings = Math.max(0, (current?.winnings || 0) + winningsDelta);
-
-    const { error } = await supabase
-      .from('wallets')
-      .upsert({
-        user_id: userId,
-        balance: newBalance,
-        winnings: newWinnings,
-        updated_at: new Date().toISOString(),
-      });
-
-    return !error;
-  } catch {
-    return false;
-  }
-}
-
-export async function addWalletTransaction(data: {
-  userId: string;
-  type: string;
-  title: string;
-  amount: number;
-  status: string;
-  utrRef?: string;
-}): Promise<boolean> {
-  if (!isSupabaseConfigured() || !data.userId) return false;
-  try {
-    const { error } = await supabase.from('wallet_transactions').insert({
-      user_id: data.userId,
-      type: data.type,
-      title: data.title,
-      amount: data.amount,
-      status: data.status,
-      utr_ref: data.utrRef || null,
-    });
-    return !error;
-  } catch {
-    return false;
   }
 }
 
